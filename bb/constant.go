@@ -1,5 +1,9 @@
 package bb
 
+type RequestId uint32 // RequestId has 24 bit req id, 8 bit domain id
+type DomainId uint8
+type SubCmd uint32 // SubCmd only use 24 bit actually
+
 const (
 	BB_MAC_LEN         = 4    /**<MAC地址字节长度*/
 	BB_REG_PAGE_NUM    = 16   /**<基带寄存器页表的数量*/
@@ -28,10 +32,13 @@ const (
 )
 
 const (
-	BB_REQ_CFG = iota
-	BB_REQ_GET
-	BB_REQ_SET
-	BB_REQ_RPC_IOCTL
-	BB_REQ_RPC
-	BB_REQ_PLAT_CTL
+	BB_REQ_CFG       DomainId = 0
+	BB_REQ_GET       DomainId = 1
+	BB_REQ_SET       DomainId = 2
+	BB_REQ_CB        DomainId = 3
+	BB_REQ_SOCKET    DomainId = 4
+	BB_REQ_DBG       DomainId = 5
+	BB_REQ_RPC       DomainId = 10
+	BB_REQ_RPC_IOCTL DomainId = 11
+	BB_REQ_PLAT_CTL  DomainId = 12
 )

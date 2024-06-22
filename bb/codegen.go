@@ -2,15 +2,15 @@ package bb
 
 import "fmt"
 
-func request(reqType, reqCode int) int {
-	return (reqType << 8) | reqCode
+func request(reqType DomainId, reqCode SubCmd) uint32 {
+	return (uint32(reqType) << 24) | uint32(reqCode)
 }
 
-func generateVariable(name string, value int, comment string) string {
+func generateVariable(name string, value uint32, comment string) string {
 	if comment == "" {
-		return fmt.Sprintf("const %s = 0x%08x", name, value)
+		return fmt.Sprintf("const %s RequestId = 0x%08x", name, value)
 	}
-	return fmt.Sprintf("const %s = 0x%08x /** %s */", name, value, comment)
+	return fmt.Sprintf("const %s RequestId = 0x%08x /** %s */", name, value, comment)
 }
 
 func GenerateCfg() []string {

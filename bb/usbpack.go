@@ -15,14 +15,10 @@ type UsbPack struct {
 
 const UsbPackHeaderSize = 19 // 1 + 4 + 4 + 4 + 4 + 1 + 1
 
-// Write expect an empty buffer. If the given buffer is not empty,
-// the calculated XOR check will be wrong.
-//
+// Write writes the UsbPack to the buffer.
 // See make_usbpack2buff in usbpack.c
 func (p *UsbPack) Write(buf *bytes.Buffer) error {
-	if buf.Len() != 0 {
-		return errorx.IllegalArgument.New("buffer is not empty, expecting an empty buffer, got %d", buf.Len())
-	}
+	offsetS := buf.Len()
 	packetSz := UsbPackHeaderSize + len(p.Buf)
 	if buf.Available() < packetSz {
 		return errorx.IllegalArgument.New("buffer is too small, expecting %d, got %d", UsbPackHeaderSize+len(p.Buf), buf.Len())
@@ -30,11 +26,12 @@ func (p *UsbPack) Write(buf *bytes.Buffer) error {
 
 	buf.WriteByte(0xaa)
 	var err error
+	// the buffer size is little endian but the rest is big endian
+	// no idea why the inconsistency
 	if p.Buf == nil {
-		// binary.BigEndian.PutUint32(buf.Next(4), 0)
-		err = binary.Write(buf, binary.BigEndian, uint32(0))
+		err = binary.Write(buf, binary.LittleEndian, uint32(0))
 	} else {
-		err = binary.Write(buf, binary.BigEndian, uint32(len(p.Buf)))
+		err = binary.Write(buf, binary.LittleEndian, uint32(len(p.Buf)))
 	}
 	if err != nil {
 		return errorx.Decorate(err, "failed to write buffer size")
@@ -52,8 +49,8 @@ func (p *UsbPack) Write(buf *bytes.Buffer) error {
 		return errorx.Decorate(err, "failed to write status")
 	}
 
-	// a byte xor
-	buf.WriteByte(xorCheck(buf.Bytes()))
+	// a byte xor, only calculate the written bytes
+	buf.WriteByte(xorCheck(buf.Bytes()[offsetS:buf.Len()]))
 	if p.Buf != nil {
 		buf.Write(p.Buf)
 	}
@@ -73,7 +70,7 @@ func (p *UsbPack) Read(buf *bytes.Buffer) error {
 		return errorx.IllegalArgument.New("expecting 0xaa header, got %x", aa)
 	}
 	var bufSz uint32 = 0
-	err = binary.Read(buf, binary.BigEndian, &bufSz)
+	err = binary.Read(buf, binary.LittleEndian, &bufSz)
 	if err != nil {
 		return errorx.Decorate(err, "failed to read buffer size")
 	}
@@ -89,6 +86,7 @@ func (p *UsbPack) Read(buf *bytes.Buffer) error {
 	if err != nil {
 		return errorx.Decorate(err, "failed to read status")
 	}
+	// reserved for xor check
 	_, err = buf.ReadByte()
 	if err != nil {
 		return errorx.Decorate(err, "failed to read xor")

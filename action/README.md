@@ -8,6 +8,21 @@ bb_dev_open(work_id) => bb_dev_handle_t
 // bb_dev_handle_t has session stuff
 // like a linked list of callback sessions
 // and mutex/condition variable
+/**
+    typedef struct bb_dev_handle_t {
+        bb_host_t*       phost;
+        struct list_head bb_dev_handle_list;
+
+        void*            ioctl_sess;
+        struct list_head cblshead;
+        pthread_mutex_t  cbmtx;
+        pthread_cond_t   cbcv;
+
+        pthread_mutex_t ioctl_lk;
+
+        uint32_t sel_id;
+    } bb_dev_handle_t;
+*/
 
 // NOTE: Unless explicit mention, all of the function types are
 // treated as closure by ignoring the user data (void*) argument
@@ -59,4 +74,14 @@ bb_read_thread(handle: &BB_HANDLE)
         // update buffer, no idea why
     // session close, clean up the session
     handle.bg_running_flg = false
+```
+
+See also `BB_RPC_GET_HOTPLUG_EVENT`
+
+```c
+typedef struct {
+    uint32_t id;
+    uint32_t status;
+    bb_dev_info_t bb_mac;
+} bb_event_hotplug_t;
 ```

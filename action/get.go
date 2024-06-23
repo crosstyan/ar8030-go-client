@@ -42,11 +42,6 @@ func GetStatus(conn net.Conn, workId uint32, userBmp uint16) (*bb.GetStatusOut, 
 	if resp.Sta < 0 {
 		return nil, errorx.ExternalError.New("negative status %d", resp.Sta)
 	}
-	rBuf := bytes.NewBuffer(resp.Buf)
-	oStaus := bb.GetStatusOut{}
-	err = binary.Read(rBuf, binary.NativeEndian, &oStaus)
-	if err != nil {
-		return nil, err
-	}
+	oStaus := bb.UnsafeGetStatusOut(resp.Buf)
 	return &oStaus, nil
 }

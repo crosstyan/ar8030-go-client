@@ -5,6 +5,7 @@ import (
 	"ar8030/log"
 	"fmt"
 	"net"
+	"os"
 )
 
 const (
@@ -37,14 +38,21 @@ func main() {
 		log.Sugar().Panicw("failed to get work id list", "error", err.Error())
 	}
 	log.Sugar().Infow("work id list", "list", wrkList)
+	var selId uint32 = 0
 	if len(wrkList) != 0 {
-		selId := wrkList[0]
-		ok, err := action.TestWorkId(conn, selId)
+		selId = wrkList[0]
+		ok, err := action.SelectWorkId(conn, selId)
 		if err != nil {
 			log.Sugar().Panicw("failed to test work id", "error", err.Error(), "id", selId)
 		}
 		if !ok {
 			log.Sugar().Errorw("work id is invalid", "id", selId)
+			os.Exit(1)
 		}
 	}
+	st, err := action.GetStatus(selId, conn)
+	if err != nil {
+		log.Sugar().Panicw("failed to get status", "error", err.Error())
+	}
+	log.Sugar().Infow("status", "status", st)
 }

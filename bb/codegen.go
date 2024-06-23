@@ -13,7 +13,7 @@ func generateVariable(name string, value uint32, comment string) string {
 	return fmt.Sprintf("const %s RequestId = 0x%08x /** %s */", name, value, comment)
 }
 
-func GenerateCfg() []string {
+func generateCfg() []string {
 	ss := make([]string, 0)
 	ss = append(ss, generateVariable("BB_CFG_AP_BASIC", request(BB_REQ_CFG, 0), "AP角色的基本配置命令字"))
 	ss = append(ss, generateVariable("BB_CFG_DEV_BASIC", request(BB_REQ_CFG, 1), "DEV角色的基本配置命令字"))
@@ -31,7 +31,7 @@ func GenerateCfg() []string {
 	return ss
 }
 
-func GenerateGet() []string {
+func generateGet() []string {
 	ss := make([]string, 0)
 	ss = append(ss, generateVariable("BB_GET_STATUS", request(BB_REQ_GET, 0), "读取基带工作状态命令字"))
 	ss = append(ss, generateVariable("BB_GET_PAIR_RESULT", request(BB_REQ_GET, 1), "读取配对命令结果命令字"))
@@ -60,7 +60,7 @@ func GenerateGet() []string {
 	return ss
 }
 
-func GenerateSet() []string {
+func generateSet() []string {
 	ss := make([]string, 0)
 	ss = append(ss, generateVariable("BB_SET_EVENT_SUBSCRIBE", request(BB_REQ_SET, 0), "事件订阅类型命令字"))
 	ss = append(ss, generateVariable("BB_SET_EVENT_UNSUBSCRIBE", request(BB_REQ_SET, 1), "事件反订阅类型命令字"))
@@ -110,7 +110,7 @@ func GenerateSet() []string {
 	return ss
 }
 
-func GenerateSpecialControl() []string {
+func generateSpecialControl() []string {
 	ss := make([]string, 0)
 	ss = append(ss, generateVariable("BB_START_REQ", request(BB_REQ_RPC_IOCTL, 0), ""))
 	ss = append(ss, generateVariable("BB_STOP_REQ", request(BB_REQ_RPC_IOCTL, 1), ""))
@@ -137,8 +137,8 @@ func PrintConstants() {
 		}
 		fmt.Print("\n")
 	}
-	printWithName("cfg", GenerateCfg())
-	printWithName("get", GenerateGet())
-	printWithName("set", GenerateSet())
-	printWithName("special control", GenerateSpecialControl())
+	printWithName("cfg", generateCfg())
+	printWithName("get", generateGet())
+	printWithName("set", generateSet())
+	printWithName("special control", generateSpecialControl())
 }

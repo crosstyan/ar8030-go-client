@@ -70,6 +70,7 @@ func (p *UsbPack) Read(buf *bytes.Buffer) error {
 		return errorx.IllegalArgument.New("expecting 0xaa header, got %x", aa)
 	}
 	var bufSz uint32 = 0
+	// intended inconsistency
 	err = binary.Read(buf, binary.LittleEndian, &bufSz)
 	if err != nil {
 		return errorx.Decorate(err, "failed to read buffer size")

@@ -9,6 +9,10 @@ import (
 	"net"
 )
 
+/**
+ * See `cmdtab` (`BBIOCTL_TAB`) in `ioctl_tab.c`
+ */
+
 type RequestOption struct {
 	RequestBufferSize  uint
 	ResponseBufferSize uint
@@ -70,7 +74,7 @@ func TestServer(conn net.Conn) error {
 		return err
 	}
 	if resp.Sta != 0 {
-		return errorx.ExternalError.New("non-zero status %d", req.Sta)
+		return errorx.ExternalError.New("bad status %d", req.Sta)
 	}
 	return nil
 }
@@ -101,17 +105,16 @@ func GetWorkIdList(conn net.Conn) ([]uint32, error) {
 		}
 		workIdList = append(workIdList, workId)
 	}
-	// the status might be the number of work id
-	// not sure
+	// NOTE: the status might be the number of work id, but not sure
 	if resp.Sta < 0 {
-		return workIdList, errorx.ExternalError.New("non-zero status %d", req.Sta)
+		return workIdList, errorx.ExternalError.New("bad status %d", req.Sta)
 	}
 
 	return workIdList, nil
 }
 
-// TestWorkId test the work id, i.e. the device id to see if it is valid
-func TestWorkId(conn net.Conn, workId uint32) (bool, error) {
+// SelectWorkId select and test the work id, i.e. the device id to see if it is a valid one
+func SelectWorkId(conn net.Conn, workId uint32) (bool, error) {
 	req := bb.UsbPack{
 		MsgId: workId,
 		Sta:   0,
@@ -127,7 +130,7 @@ func TestWorkId(conn net.Conn, workId uint32) (bool, error) {
 	if resp.Sta == -1 {
 		return false, nil
 	} else if resp.Sta < 0 {
-		return false, errorx.ExternalError.New("non-zero status %d", req.Sta)
+		return false, errorx.ExternalError.New("bad status %d", req.Sta)
 	}
 	return true, nil
 }

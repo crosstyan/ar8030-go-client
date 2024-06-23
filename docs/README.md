@@ -135,3 +135,7 @@ bb_read_thread(handle: &BB_HANDLE)
 
 See also `BB_RPC_GET_HOTPLUG_EVENT` for detecting hotplug (add/remove device
 when daemon is running)
+
+## Daemon
+
+`rpc_recv_chk_init` runs in a separate thread for each TCP connection.

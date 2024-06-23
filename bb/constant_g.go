@@ -45,6 +45,9 @@ const BB_GET_1V1_INFO RequestId = 0x0100006b         /** 获取基带用户基�
 const BB_GET_PRJ_DISPATCH RequestId = 0x010000c8     /** 二级GET命令分发 */
 
 // set
+
+// BB_SET_EVENT_SUBSCRIBE is only used in client
+// See [SubscribeRequestId]
 const BB_SET_EVENT_SUBSCRIBE RequestId = 0x02000000           /** 事件订阅类型命令字 */
 const BB_SET_EVENT_UNSUBSCRIBE RequestId = 0x02000001         /** 事件反订阅类型命令字 */
 const BB_SET_PAIR_MODE RequestId = 0x02000002                 /** 设置指定SLOT进入配对模式命令字 */

@@ -3,14 +3,15 @@ package bb
 import (
 	"fmt"
 	"strings"
+	"time"
 	"unsafe"
 )
 
-// UnsafeGetStatusOut is a helper function to convert a byte slice to a [GetStatusOut] struct
+// UnsafeFromByteSlice is a helper function to convert a byte slice to a struct
 // since it's casting a byte slice without any proper validation, it's unsafe
 // It's expecting a C like alignment of the binary data, in native endian
-func UnsafeGetStatusOut(data []byte) GetStatusOut {
-	return *(*GetStatusOut)(unsafe.Pointer(&data[0]))
+func UnsafeFromByteSlice[T any](data []byte) T {
+	return *(*T)(unsafe.Pointer(&data[0]))
 }
 
 func (s *GetStatusOut) GetMaskedStatus() ([]UserStatus, []LinkStatus) {
@@ -86,5 +87,17 @@ func (s *GetStatusOut) String() string {
 		}
 	}
 	_, _ = fmt.Fprintf(ss, "}")
+	return ss.String()
+}
+
+func (s *GetSysInfoOut) String() string {
+	ss := new(strings.Builder)
+	// note that they're null terminated strings
+	upTimeDur := time.Millisecond * time.Duration(s.Uptime)
+	_, _ = fmt.Fprintf(ss, "{Uptime:%s, ", upTimeDur.String())
+	_, _ = fmt.Fprintf(ss, "CompileTime:%s, ", FromNullTermString(s.CompileTime[:]))
+	_, _ = fmt.Fprintf(ss, "SoftVer:%s, ", FromNullTermString(s.SoftVer[:]))
+	_, _ = fmt.Fprintf(ss, "HardwareVer:%s, ", FromNullTermString(s.HardwareVer[:]))
+	_, _ = fmt.Fprintf(ss, "FirmwareVer:%s}", FromNullTermString(s.FirmwareVer[:]))
 	return ss.String()
 }

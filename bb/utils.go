@@ -1,6 +1,9 @@
 package bb
 
-import "fmt"
+import (
+	"bytes"
+	"fmt"
+)
 
 func xorCheck(buff []byte) uint8 {
 	var xor uint8 = 0xff
@@ -8,6 +11,14 @@ func xorCheck(buff []byte) uint8 {
 		xor ^= b
 	}
 	return xor
+}
+
+func FromNullTermString(data []byte) string {
+	n := bytes.IndexByte(data, 0x00)
+	if n == -1 {
+		return string(data)
+	}
+	return string(data[:n])
 }
 
 func PrintAsClangArray(data []byte) {

@@ -1,8 +1,22 @@
 package bb
 
 import (
+	"bytes"
+	"encoding/binary"
 	"fmt"
 )
+
+func (s *GetStatusOut) Read(data []byte) error {
+	// https://go.dev/blog/errors-are-values
+	var err error
+	buf := bytes.NewBuffer(data)
+	err = binary.Read(buf, binary.NativeEndian, s)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
 
 func (s *GetStatusOut) GetMaskedStatus() ([]UserStatus, []LinkStatus) {
 	// can also use CfgBmp
@@ -14,7 +28,7 @@ func (s *GetStatusOut) GetMaskedStatus() ([]UserStatus, []LinkStatus) {
 		if bitMap&0x1 == 1 {
 			sts = append(sts, s.UserStatus[it])
 			// TODO: figure out why it is reversed
-			lSts = append(lSts, s.LinkStatus[7-it])
+			lSts = append(lSts, s.LinkStatus[it])
 		}
 		bitMap >>= 1
 		it++

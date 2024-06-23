@@ -30,14 +30,14 @@ type UserStatus struct {
 }
 
 type LinkStatus struct {
-	State   uint8   // Link layer state. Type: bb_link_state_e
-	RxMcs   uint8   // Link layer receive MCS. Type: bb_phy_mcs_e
-	PeerMac MacAddr // Peer MAC
+	State   LinkState // Link layer state. Type: bb_link_state_e
+	RxMcs   PhyMcs    // Link layer receive MCS. Type: bb_phy_mcs_e
+	PeerMac MacAddr   // Peer MAC
 }
 
 type GetStatusOut struct {
-	Role       uint8                        // Device role. Type: bb_role_e
-	Mode       uint8                        // Baseband mode. Type: bb_mode_e
+	Role       Role                         // Device role. Type: bb_role_e
+	Mode       Mode                         // Baseband mode. Type: bb_mode_e
 	SyncMode   uint8                        // Chip sync mode. 1: enable, 0: disable
 	SyncMaster uint8                        // Identity in sync mode. 1: master, 0: slave
 	CfgSbmp    uint8                        // Configured SLOT bitmap

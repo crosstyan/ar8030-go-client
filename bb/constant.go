@@ -76,7 +76,7 @@ const (
 	BB_CLK_200M_SEL               // 200M working frequency
 )
 
-type Role int
+type Role byte
 
 const (
 	BB_ROLE_AP  Role = iota // Network root device
@@ -84,7 +84,7 @@ const (
 	BB_ROLE_MAX
 )
 
-type Mode int
+type Mode byte
 
 const (
 	BB_MODE_SINGLE_USER Mode = iota // Single user mode
@@ -162,14 +162,14 @@ const (
 
 const BB_SLOT_AP Slot = BB_SLOT_0 // DEV侧用于标识AP的逻辑位置
 
-type SlotMode int
+type SlotMode byte
 
 const (
 	BB_SLOT_MODE_FIXED   SlotMode = iota // SLOT数量固定不变
 	BB_SLOT_MODE_DYNAMIC                 // 根据DEV的接入与退出，动态的调整帧结构
 )
 
-type LinkState int
+type LinkState byte
 
 const (
 	BB_LINK_STATE_IDLE    LinkState = iota // Idle state
@@ -178,7 +178,7 @@ const (
 	BB_LINK_STATE_MAX
 )
 
-type Band int
+type Band byte
 
 const (
 	BB_BAND_1G Band = iota // 1G: 150MHZ  ~ 1000MHZ
@@ -187,7 +187,7 @@ const (
 	BB_BAND_MAX
 )
 
-type RFPath int
+type RFPath byte
 
 const (
 	BB_RF_PATH_A RFPath = iota // 射频A路
@@ -195,7 +195,7 @@ const (
 	BB_RF_PATH_MAX
 )
 
-type BandMode int
+type BandMode byte
 
 const (
 	BB_BAND_MODE_SINGLE BandMode = iota // 单频模式

@@ -21,7 +21,7 @@ func GetStatus(conn net.Conn, workId uint32, userBmp uint16) (*bb.GetStatusOut, 
 	if err != nil {
 		return nil, err
 	}
-	log.Sugar().Infow("get status", "iStatus", hex.EncodeToString(buf.Bytes()))
+	log.Sugar().Debugw("get status", "iStatus", hex.EncodeToString(buf.Bytes()))
 	pack := &bb.UsbPack{
 		Buf:   buf.Bytes(),
 		MsgId: workId,
@@ -38,7 +38,6 @@ func GetStatus(conn net.Conn, workId uint32, userBmp uint16) (*bb.GetStatusOut, 
 	if resp.Sta != 0 {
 		return nil, errorx.ExternalError.New("non-zero status %d", resp.Sta)
 	}
-	bb.PrintAsClangArray(resp.Buf)
 	if resp.Sta < 0 {
 		return nil, errorx.ExternalError.New("negative status %d", resp.Sta)
 	}

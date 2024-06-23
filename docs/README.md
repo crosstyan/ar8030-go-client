@@ -4,7 +4,6 @@ I don't plan to rewrite the daemon but
 I do need to reimplement the client.
 I can't bare C code, it's hard to read.
 
-
 ```c
 // bb_dev_handle_t overloaded
 // a linked list of callback sessions (by `dev_insert_session`)
@@ -135,6 +134,8 @@ bb_read_thread(handle: &BB_HANDLE)
 
 See also `BB_RPC_GET_HOTPLUG_EVENT` for detecting hotplug (add/remove device
 when daemon is running)
+
+See also `PF_AR8030_Init` in `pf_ar8030.c` for the initialization of the client.
 
 ## Daemon
 

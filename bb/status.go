@@ -69,13 +69,21 @@ func (s *GetStatusOut) String() string {
 	_, _ = fmt.Fprintf(ss, "SyncMaster:%d, ", s.SyncMaster)
 	_, _ = fmt.Fprintf(ss, "CfgSbmp:%d, ", s.CfgSbmp)
 	_, _ = fmt.Fprintf(ss, "RtSbmp:%d, ", s.RtSbmp)
-	_, _ = fmt.Fprintf(ss, "Mac:%s, ", MacToString(&s.Mac))
+	_, _ = fmt.Fprintf(ss, "Mac:'%s'", MacToString(&s.Mac))
+	_, _ = fmt.Fprintf(ss, ", ")
 	uSts, lSts := s.GetMaskedStatus()
 	for i, sts := range uSts {
-		_, _ = fmt.Fprintf(ss, "UserStatus[%d]:%s, ", i, sts.String())
+		_, _ = fmt.Fprintf(ss, "UserStatus[%d]:%s", i, sts.String())
+		if i < len(uSts)-1 {
+			_, _ = fmt.Fprintf(ss, ", ")
+		}
 	}
+	_, _ = fmt.Fprintf(ss, ", ")
 	for i, sts := range lSts {
-		_, _ = fmt.Fprintf(ss, "LinkStatus[%d]:%s, ", i, sts.String())
+		_, _ = fmt.Fprintf(ss, "LinkStatus[%d]:%s", i, sts.String())
+		if i < len(lSts)-1 {
+			_, _ = fmt.Fprintf(ss, ", ")
+		}
 	}
 	_, _ = fmt.Fprintf(ss, "}")
 	return ss.String()

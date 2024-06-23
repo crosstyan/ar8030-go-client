@@ -2,12 +2,10 @@ package main
 
 import (
 	"ar8030/action"
-	"ar8030/bb"
 	"ar8030/log"
 	"fmt"
 	"net"
 	"os"
-	"unsafe"
 )
 
 var data = []byte{
@@ -82,27 +80,10 @@ func main() {
 			os.Exit(1)
 		}
 	}
-	// 0x3fff is a magic value
+	// 0x3fff is a magic value, no idea why it's chosen
 	st, err := action.GetStatus(conn, selId, 0x3fff)
 	if err != nil {
 		log.Sugar().Panicw("failed to get status", "error", err.Error())
 	}
 	log.Sugar().Infow("status", "status", st)
-
-	refSt := bb.GetStatusOut{}
-	stAlign := unsafe.Alignof(refSt)
-	usALign := unsafe.Alignof(refSt.UserStatus)
-	lsAlign := unsafe.Alignof(refSt.LinkStatus)
-	log.Sugar().Infow("alignment",
-		"state alignment", stAlign,
-		"user status alignment", usALign,
-		"link status alignment", lsAlign)
-	refSt = bb.UnsafeGetStatusOut(data)
-	//rbuf := bytes.NewBuffer(data)
-	//err = binary.Read(rbuf, binary.NativeEndian, &refSt)
-	//if err != nil {
-	//	log.Sugar().Panicw("failed to read binary data", "error", err.Error())
-	//}
-	log.Sugar().Infow("status", "status", refSt)
-	log.Sugar().Info("ok")
 }

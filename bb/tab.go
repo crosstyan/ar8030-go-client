@@ -15,13 +15,13 @@ type GetStatusIn struct {
 type MacAddr [BB_MAC_LEN]byte
 
 type PhyStatus struct {
-	Mcs          uint8  // MCS level. Note: If it is the RX end, this field is meaningless and should be obtained from the link status.
-	RfMode       uint8  // TX and RX mode. The user decides the meaning of the value based on whether it is an RX parameter or a TX parameter.
-	TintlvEnable uint8  // Whether to perform time domain interleaving. see `bb_timeintlv_enable_e`
-	TintlvNum    uint8  // Number of interleaving blocks. `bb_timeintlv_num_e`
-	TintlvLen    uint8  // Number of OFDM in the interleaving block. `bb_timeintlv_len_e`
-	Bandwidth    uint8  // Bandwidth. `bb_bandwidth_e`
-	FreqKhz      uint32 // Frequency point in KHz.
+	Mcs          PhyMcs          // MCS级别 注意：如果是RX端此字段无意义，应该从link status中获取 类型 bb_phy_mcs_e
+	RfMode       uint8           // TX和RX模式，用户根据所在是RX参数或TX参数来决定值的意义 类型 bb_tx_mode_e 或 bb_rx_mode_e
+	TintlvEnable TimeIntlvEnable // 是否进行时域交织 see `bb_timeintlv_enable_e`
+	TintlvNum    TimeIntlvNum    // 交织块数量 `bb_timeintlv_num_e`
+	TintlvLen    TimeIntlvLen    // 交织块OFDM数量 `bb_timeintlv_len_e`
+	Bandwidth    Bandwidth       // Bandwidth. `bb_bandwidth_e`
+	FreqKhz      uint32          // Frequency point in KHz.
 }
 
 type UserStatus struct {

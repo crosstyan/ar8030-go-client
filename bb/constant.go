@@ -94,7 +94,7 @@ const (
 	BB_MODE_MAX
 )
 
-type PhyMcs int
+type PhyMcs byte
 
 const (
 	BB_PHY_MCS_NEG_2 PhyMcs = iota // BPSK   CR_1/2 REP_4 single stream
@@ -125,7 +125,7 @@ const (
 	BB_PHY_MCS_MAX
 )
 
-type User int
+type User byte
 
 const (
 	BB_USER_0           User = iota // Physical user 0
@@ -138,18 +138,18 @@ const (
 	BB_USER_7                       // Physical user 7
 	BB_USER_BR_CS                   // Physical user BR/CS
 	BB_USER_BR2_CS2                 // Physical user BR2/CS2
-	BB_DATA_USER_MAX                // Maximum data user identifier, used for software programming assistance
-	BB_USER_SWEEP                   // Physical long sweep frequency user
-	BB_USER_SWEEP_SHORT             // Physical short sweep frequency user
+	BB_DATA_USER_MAX                // 最大数据用户标识，用于软件编程辅助
+	BB_USER_SWEEP_SHORT             // 物理短扫频用户
 )
 
+const BB_USER_DFS User = BB_USER_7
+const BB_USER_SWEEP User = BB_DATA_USER_MAX // 物理长扫频用户
 const BB_USER_MAX User = BB_USER_SWEEP_SHORT + 1
 
-type Slot int
+type Slot byte
 
 const (
 	BB_SLOT_0   Slot = iota // Logical position SLOT0
-	BB_SLOT_AP              // Logical position for AP on DEV side
 	BB_SLOT_1               // Logical position SLOT1
 	BB_SLOT_2               // Logical position SLOT2
 	BB_SLOT_3               // Logical position SLOT3
@@ -159,6 +159,8 @@ const (
 	BB_SLOT_7               // Logical position SLOT7
 	BB_SLOT_MAX             // Maximum logical position
 )
+
+const BB_SLOT_AP Slot = BB_SLOT_0 // DEV侧用于标识AP的逻辑位置
 
 type SlotMode int
 
@@ -203,7 +205,7 @@ const (
 	BB_BAND_MODE_MAX
 )
 
-type Bandwidth int
+type Bandwidth byte
 
 const (
 	BB_BW_1_25M Bandwidth = iota // 1.25MHZ
@@ -215,7 +217,7 @@ const (
 	BB_BW_MAX
 )
 
-type TimeIntlvLen int
+type TimeIntlvLen byte
 
 const (
 	BB_TIMEINTLV_LEN_3  TimeIntlvLen = iota // 3  OFDM
@@ -226,7 +228,7 @@ const (
 	BB_TIMEINTLV_LEN_MAX
 )
 
-type TimeIntlvEnable int
+type TimeIntlvEnable byte
 
 const (
 	BB_TIMEINTLV_OFF TimeIntlvEnable = iota // 交织块时域不交织
@@ -234,7 +236,7 @@ const (
 	BB_TIMEINTLV_ENABLE_MAX
 )
 
-type TimeIntlvNum int
+type TimeIntlvNum byte
 
 const (
 	BB_TIMEINTLV_1_BLOCK TimeIntlvNum = iota // 一个交织块
@@ -259,6 +261,7 @@ const (
 	BB_FCH_INFO_MAX
 )
 
+// 定义 8030 支持的 RF 发送模式
 type TXMode int
 
 const (
@@ -268,7 +271,7 @@ const (
 	BB_TX_MODE_MAX
 )
 
-// 定义 8030 支持的 RF 发送模式
+// 定义8030支持的RF接收模式
 type RXMode int
 
 const (

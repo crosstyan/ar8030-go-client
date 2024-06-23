@@ -10,9 +10,9 @@ import (
 	"net"
 )
 
-func GetStatus(workId uint32, conn net.Conn) (*bb.GetStatusOut, error) {
+func GetStatus(conn net.Conn, workId uint32, userBmp uint16) (*bb.GetStatusOut, error) {
 	iStatus := bb.GetStatusIn{
-		UserBmp: 1,
+		UserBmp: userBmp,
 	}
 	var err error
 	buf_ := make([]byte, 0, 32)
@@ -38,7 +38,7 @@ func GetStatus(workId uint32, conn net.Conn) (*bb.GetStatusOut, error) {
 	if resp.Sta != 0 {
 		return nil, errorx.ExternalError.New("non-zero status %d", resp.Sta)
 	}
-	log.Sugar().Infow("get status", "resp", hex.EncodeToString(resp.Buf))
+	bb.PrintAsClangArray(resp.Buf)
 	if resp.Sta < 0 {
 		return nil, errorx.ExternalError.New("negative status %d", resp.Sta)
 	}

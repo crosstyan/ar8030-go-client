@@ -16,7 +16,7 @@ func GetStatus(conn net.Conn, workId uint32, userBmp uint16) (*bb.GetStatusOut, 
 	var err error
 	buf_ := make([]byte, 0, 32)
 	buf := bytes.NewBuffer(buf_)
-	err = binary.Write(buf, binary.NativeEndian, iStatus)
+	err = binary.Write(buf, binary.LittleEndian, iStatus)
 	if err != nil {
 		return nil, err
 	}
@@ -71,11 +71,11 @@ func GetCfg(conn net.Conn, workId uint32, seq uint16, offset uint16) (*bb.GetCfg
 	var err error
 	buf_ := make([]byte, 0, 32)
 	buf := bytes.NewBuffer(buf_)
-	err = binary.Write(buf, binary.NativeEndian, ip.Seq)
-	err = binary.Write(buf, binary.NativeEndian, ip.Mode)
-	err = binary.Write(buf, binary.NativeEndian, byte(0)) // padding
-	err = binary.Write(buf, binary.NativeEndian, ip.Offset)
-	err = binary.Write(buf, binary.NativeEndian, ip.Length)
+	err = binary.Write(buf, binary.LittleEndian, ip.Seq)
+	err = binary.Write(buf, binary.LittleEndian, ip.Mode)
+	err = binary.Write(buf, binary.LittleEndian, byte(0)) // padding
+	err = binary.Write(buf, binary.LittleEndian, ip.Offset)
+	err = binary.Write(buf, binary.LittleEndian, ip.Length)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +100,8 @@ func GetCfg(conn net.Conn, workId uint32, seq uint16, offset uint16) (*bb.GetCfg
 	return &oCfg, nil
 }
 
-func GetTotalCfg(conn net.Conn, workId uint32) ([]byte, error) {
+// GetFullCfg fetches the full configuration from the device
+func GetFullCfg(conn net.Conn, workId uint32) ([]byte, error) {
 	var cfgBuf []byte
 	var offset uint16 = 0
 	var seqNum uint16 = 0

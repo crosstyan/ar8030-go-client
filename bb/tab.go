@@ -35,6 +35,7 @@ type LinkStatus struct {
 	PeerMac MacAddr   // Peer MAC
 }
 
+// GetStatusOut implements the output parameter of BB_GET_STATUS
 type GetStatusOut struct {
 	Role       Role                         // Device role. Type: bb_role_e
 	Mode       Mode                         // Baseband mode. Type: bb_mode_e
@@ -47,8 +48,7 @@ type GetStatusOut struct {
 	LinkStatus [BB_SLOT_MAX]LinkStatus      // Link status
 }
 
-// GetSysInfoOut is the output of BB_GET_SYS_INFO
-// note that there's no input for BB_GET_SYS_INFO
+// GetSysInfoOut implements the output parameter of BB_GET_SYS_INFO
 type GetSysInfoOut struct {
 	Uptime      uint64   // 获取系统运行时间
 	CompileTime [32]byte // 编译时间
@@ -57,7 +57,7 @@ type GetSysInfoOut struct {
 	FirmwareVer [32]byte // 固件版本
 }
 
-const GetCfgInMaxLength = 1011
+const GetCfgInMaxLength = BB_CFG_PAGE_SIZE - 12 - 1
 
 // GetCfgIn 定义读取命令 BB_GET_CFG 的输入参数结构
 type GetCfgIn struct {
@@ -77,3 +77,26 @@ type GetCfgOut struct {
 	Length      uint16 // 设置基带配置文件的字节长度
 	Data        [BB_CFG_PAGE_SIZE - 12]uint8
 }
+
+// SetPairModeIn implements the input parameter of BB_SET_PAIR_MODE
+type SetPairModeIn struct {
+	Start    uint8                       // 配对动作，1: 进入配对模式, 0: 退出配对模式
+	SlotBmp  uint8                       // AP侧允许进行配对的SLOT位置bitmap，DEV忽略本字段
+	BlackMac [BB_BLACK_LIST_SIZE]MacAddr // 进入配对时，设置禁止配对的黑名单MAC, 如不设黑名单请清0
+}
+
+// SetApMacIn implements the input parameter of BB_SET_AP_MAC
+// Note that only the DEV role can set the AP MAC address.
+type SetApMacIn struct {
+	Mac MacAddr // AP MAC address
+}
+
+// ConfCandidates 定义配置命令 BB_CFG_CANDIDATES 的输入参数结构
+type ConfCandidates struct {
+	Slot   Slot                                  // 接入候选人配置，当slot>=BB_SLOT_MAX表示不固定slot位置
+	MacNum uint8                                 // 指定 mac_tab 中MAC的数量
+	MacTab [BB_CONFIG_MAX_SLOT_CANDIDATE]MacAddr // MAC表
+}
+
+// SetCandidatesIn is an alias of ConfCandidates, for BB_SET_CANDIDATES command
+type SetCandidatesIn = ConfCandidates

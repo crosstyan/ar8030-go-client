@@ -62,7 +62,7 @@ func main() {
 	}
 	log.Sugar().Infow("system info", "info", sysInfo)
 
-	oCfg, err := action.GetTotalCfg(conn, selId)
+	oCfg, err := action.GetFullCfg(conn, selId)
 	if err != nil {
 		log.Sugar().Panicw("failed to get configuration", "error", err.Error())
 	}

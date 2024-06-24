@@ -326,6 +326,40 @@ const (
 	BB_DFS_EVENT
 )
 
+const (
+	BB_CONFIG_PSRAM_ENABLE            = 1     // 使能基带PSRAM机制
+	BB_CONFIG_MRC_ENABLE              = 1     // 使能基带MRC机制
+	BB_CONFIG_MAX_TRANSPORT_PER_SLOT  = 4     // 每个SLOT上最大的transport数量
+	BB_CONFIG_MAX_INTERNAL_MSG_SIZE   = 128   // SDK内部消息通道最大消息长度，不含消息头
+	BB_CONFIG_MAX_TX_NODE_NUM         = 10    // MAC层最大发送节点数量
+	BB_CONFIG_MAC_RX_BUF_SIZE         = 60000 // 默认socket的接收buffer大小
+	BB_CONFIG_MAC_TX_BUF_SIZE         = 40000 // 默认socket的发送buffer大小
+	BB_CONFIG_MAX_USER_MCS_NUM        = 16    // 最大用户可设置的MCS等级数量
+	BB_CONFIG_MAX_CHAN_NUM            = 32    // 最大用户可设置的信道数量
+	BB_CONFIG_MAX_CHAN_HOP_ITEM_NUM   = 5     // 最大跳频触发项条目数量
+	BB_CONFIG_MAX_SLOT_CANDIDATE      = 5     // 每个SLOT可设置的最大候选人数量
+	BB_CONFIG_BR_FREQ_OFFSET          = 0     // BR与信道的频偏值 单位：KHz
+	BB_CONFIG_LINK_UNLOCK_TIMEOUT     = 1000  // Link通道超时门限 单位：毫秒
+	BB_CONFIG_SLOT_UNLOCK_TIMEOUT     = 1000  // FCH超时门限 单位：毫秒
+	BB_CONFIG_IDLE_SLOT_THRED         = 10    // SLOT空闲门限，用于动态slot模式，单位：秒
+	BB_CONFIG_EOP_SAMPLE_NUM          = 8     // EOP处理最近样本大小
+	BB_CONFIG_ENABLE_BR_MCS           = 1     // 使能BR的MCS控制，仅对1V1模式有效
+	BB_CONFIG_ENABLE_BLOCK_SWITCH     = 1     // 使用阻塞式模式切换机制（实验室阶段）
+	BB_CONFIG_1V1_DEV_CTRL_BR_CHAN    = 1     // 1V1模式下，使能DEV控制BR的TX信道
+	BB_CONFIG_1V1_COMPT_BR            = 1     // 1V1模式下，BR压缩模式（实验室阶段）
+	BB_CONFIG_ENABLE_LTP              = 1     // 使能网络隔离机制
+	BB_CONFIG_ENABLE_TIME_DISPATCH    = 1     // 使能链路授时机制
+	BB_CONFIG_ENABLE_FRAME_CHANGE     = 1     // 使能1V1模式下，改变帧结构的功能
+	BB_CONFIG_ENABLE_RC_HOP_POLICY    = 1     // 使能选择性跳频策略
+	BB_CONFIG_ENABLE_AUTO_BAND_POLICY = 0     // 使能频段自适应功能
+	BB_CONFIG_ENABLE_1V1_POWER_SAVE   = 1     // 使能1V1模式的节能机制
+	BB_CONFIG_DEMO_STREAM             = 0     // TBD
+	BB_CONFIG_OLD_PLOT_MODE           = 0     // TBD
+	BB_CONFIG_FRAME_CROPPING          = 1     // 1VN模式下，动态删除或增加csma帧结构
+	BB_CONFIG_LINK_BY_GROUPID         = 0     // 分组配对开关(for hyy)
+	BB_CONFIG_ENABLE_RF_FILTER_PATCH  = 0     // 使能RF滤波patch
+)
+
 // SubscribeRequestId concatenates event type with other information to form a request id
 func SubscribeRequestId(event Event) RequestId {
 	return RequestId(uint32(BB_REQ_CB)<<24 | SUBSCRIBE_REQ<<16 | uint32(event))

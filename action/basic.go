@@ -135,6 +135,8 @@ func SelectWorkId(conn net.Conn, workId uint32) (bool, error) {
 	return true, nil
 }
 
+// WriteSocket implements `bb_socket_write`
+// TODO: not sure
 func WriteSocket(conn net.Conn, workId uint32, slot bb.Slot, port byte, payload []byte) error {
 	var reqId uint32 = 4<<24 | uint32(bb.SoWrite)<<16 | uint32(slot)<<8 | uint32(port)
 	pack := bb.UsbPack{
@@ -143,5 +145,15 @@ func WriteSocket(conn net.Conn, workId uint32, slot bb.Slot, port byte, payload 
 		ReqId: bb.RequestId(reqId),
 		Buf:   payload,
 	}
-
+	buf_ := make([]byte, 0, 64+len(payload))
+	buf := bytes.NewBuffer(buf_)
+	err := pack.Write(buf)
+	if err != nil {
+		return err
+	}
+	_, err = conn.Write(buf.Bytes())
+	if err != nil {
+		return err
+	}
+	return nil
 }

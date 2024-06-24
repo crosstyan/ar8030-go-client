@@ -134,3 +134,14 @@ func SelectWorkId(conn net.Conn, workId uint32) (bool, error) {
 	}
 	return true, nil
 }
+
+func WriteSocket(conn net.Conn, workId uint32, slot bb.Slot, port byte, payload []byte) error {
+	var reqId uint32 = 4<<24 | uint32(bb.SoWrite)<<16 | uint32(slot)<<8 | uint32(port)
+	pack := bb.UsbPack{
+		MsgId: workId,
+		Sta:   0,
+		ReqId: bb.RequestId(reqId),
+		Buf:   payload,
+	}
+
+}

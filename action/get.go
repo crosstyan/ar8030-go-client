@@ -9,6 +9,7 @@ import (
 	"net"
 )
 
+// GetStatus implements bb.BB_GET_STATUS, fetching the status of the device
 func GetStatus(conn net.Conn, workId uint32, userBmp uint16) (*bb.GetStatusOut, error) {
 	iStatus := bb.GetStatusIn{
 		UserBmp: userBmp,
@@ -40,6 +41,7 @@ func GetStatus(conn net.Conn, workId uint32, userBmp uint16) (*bb.GetStatusOut, 
 	return &oStaus, nil
 }
 
+// GetSysInfo implements bb.BB_GET_SYS_INFO, fetching the system information
 func GetSysInfo(conn net.Conn, workId uint32) (*bb.GetSysInfoOut, error) {
 	pack := &bb.UsbPack{
 		MsgId: workId,
@@ -60,13 +62,37 @@ func GetSysInfo(conn net.Conn, workId uint32) (*bb.GetSysInfoOut, error) {
 	return &oSysInfo, nil
 }
 
-// GetCfg fetches the configuration from the device, but only with one segment
-func GetCfg(conn net.Conn, workId uint32, seq uint16, offset uint16) (*bb.GetCfgOut, error) {
+// GetPairResult implements bb.BB_GET_PAIR_RESULT, fetching the pairing result
+func GetPairResult(conn net.Conn, workId uint32) (*bb.GetPairResultOut, error) {
+	pack := &bb.UsbPack{
+		MsgId: workId,
+		Sta:   0,
+		ReqId: bb.BB_GET_PAIR_RESULT,
+	}
+	opt := RequestOption{
+		RequestBufferSize: 32,
+	}
+	resp, err := RequestWithPack(conn, pack, &opt)
+	if err != nil {
+		return nil, err
+	}
+	if resp.Sta < 0 {
+		return nil, errorx.ExternalError.New("negative status %d", resp.Sta)
+	}
+	oPairResult := bb.UnsafeFromByteSlice[bb.GetPairResultOut](resp.Buf)
+	return &oPairResult, nil
+}
+
+// GetCfg implements bb.BB_GET_CFG, only fetching a part of the configuration
+func GetCfg(conn net.Conn, workId uint32, seq uint16, offset uint16, length uint16) (*bb.GetCfgOut, error) {
+	if length > bb.GetCfgInMaxLength {
+		return nil, errorx.IllegalArgument.New("length %d exceeds the maximum length %d", length, bb.GetCfgInMaxLength)
+	}
 	ip := &bb.GetCfgIn{
 		Seq:    seq,
 		Mode:   0,
 		Offset: offset,
-		Length: bb.GetCfgInMaxLength,
+		Length: length,
 	}
 	var err error
 	buf_ := make([]byte, 0, 32)
@@ -105,7 +131,8 @@ func GetFullCfg(conn net.Conn, workId uint32) ([]byte, error) {
 	var cfgBuf []byte
 	var offset uint16 = 0
 	var seqNum uint16 = 0
-	cfg, err := GetCfg(conn, workId, seqNum, offset)
+	var BatchSize uint16 = bb.GetCfgInMaxLength
+	cfg, err := GetCfg(conn, workId, seqNum, offset, BatchSize)
 	if err != nil {
 		return nil, err
 	}
@@ -123,21 +150,32 @@ func GetFullCfg(conn net.Conn, workId uint32) ([]byte, error) {
 			return data[:i]
 		}
 	}
+	// just in case the data we got is less than the maximum length
+	// it's very unlikely to happen
+	if cfg.TotalLength < BatchSize {
+		a := cfg.Data[:cfg.TotalLength]
+		return findNull(a), nil
+	}
 	a := findNull(cfg.Data[:])
 	cfgBuf = append(cfgBuf, a...)
-	for i := bb.GetCfgInMaxLength; i < total; i += bb.GetCfgInMaxLength {
-		cfg, err = GetCfg(conn, workId, seqNum, offset)
+	for i := int(BatchSize); i < total; i += bb.GetCfgInMaxLength {
+		l := func() uint16 {
+			ll := total - i
+			if ll > int(BatchSize) {
+				return BatchSize
+			} else {
+				return uint16(ll)
+			}
+		}()
+		cfg, err = GetCfg(conn, workId, seqNum, offset, l)
 		if err != nil {
 			return nil, err
 		}
-		a = findNull(cfg.Data[:])
 		// discard overflown data
-		//
-		// the daemon (server) should have rejected my request
-		// or discard the data
-		if cfg.Length < bb.GetCfgInMaxLength {
+		if cfg.Length < BatchSize {
 			a = a[:cfg.Length]
 		}
+		a = findNull(cfg.Data[:])
 		cfgBuf = append(cfgBuf, a...)
 		if len(cfgBuf) >= total {
 			break

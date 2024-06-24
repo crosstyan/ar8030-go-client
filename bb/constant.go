@@ -244,7 +244,26 @@ const (
 	BB_TIMEINTLV_NUM_MAX
 )
 
-type Payload int
+// SoCmdOpt defines socket related command options
+type SoCmdOpt byte
+
+const (
+	SoOpen SoCmdOpt = iota
+	SoWrite
+	SoRead
+	SoClose
+)
+
+const (
+	SoQueryLen   SoCmdOpt = 0x90
+	SoSetTxLimit SoCmdOpt = 0x91
+	SoGetTxLimit SoCmdOpt = 0x92
+
+	SoUserBaseStart SoCmdOpt = 0xc0
+	SoUserBaseEnd   SoCmdOpt = 0xff
+)
+
+type Payload byte
 
 const (
 	BB_PAYLOAD_ON  Payload = iota // slot内有payload
@@ -252,7 +271,7 @@ const (
 	BB_PAYLOAD_MAX
 )
 
-type FCHInfoLen int
+type FCHInfoLen byte
 
 const (
 	BB_FCH_INFO_96BITS  FCHInfoLen = iota // 96bits FCH, 默认推荐
@@ -262,7 +281,7 @@ const (
 )
 
 // 定义 8030 支持的 RF 发送模式
-type TXMode int
+type TXMode byte
 
 const (
 	BB_TX_1TX      TXMode = iota // 单天线发送信号
@@ -272,7 +291,7 @@ const (
 )
 
 // 定义8030支持的RF接收模式
-type RXMode int
+type RXMode byte
 
 const (
 	BB_RX_1T1R      RXMode = iota // 单天线接收信号
@@ -283,7 +302,7 @@ const (
 )
 
 // 定义 8030 功率模式
-type PhyPwrMode int
+type PhyPwrMode byte
 
 const (
 	BB_PHY_PWR_OPENLOOP  PhyPwrMode = iota // 开环模式
@@ -291,7 +310,7 @@ const (
 )
 
 // 定义 8030 BR 跳频模式
-type BRHopMode int
+type BRHopMode byte
 
 const (
 	BB_BR_HOP_MODE_FIXED          BRHopMode = iota // 固定模式
@@ -301,7 +320,7 @@ const (
 )
 
 // 定义 8030 auto band 的切换类型
-type BandHopItem int
+type BandHopItem byte
 
 const (
 	BB_BAND_HOP_2G_2_5G BandHopItem = iota
@@ -310,7 +329,7 @@ const (
 )
 
 // 定义 dfs 认证类型
-type DFSType int
+type DFSType byte
 
 const (
 	BB_DFS_TYPE_FCC DFSType = iota
@@ -318,7 +337,7 @@ const (
 )
 
 // 定义 dfs 操作类型
-type DFSSubCmd int
+type DFSSubCmd byte
 
 const (
 	BB_DFS_CONF_GET DFSSubCmd = iota

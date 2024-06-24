@@ -100,3 +100,19 @@ type ConfCandidates struct {
 
 // SetCandidatesIn is an alias of ConfCandidates, for BB_SET_CANDIDATES command
 type SetCandidatesIn = ConfCandidates
+
+// Quality means ar8030 物理用户信号质量
+type Quality struct {
+	Snr     uint16 // 物理用户接收信噪比，转化db公式 10log(snr/36)
+	LdpcErr uint16 // 交织块中解码错误的 LDPC 块个数
+	LdpcNum uint16 // 交织块中总的 LDPC 块个数
+	GainA   uint8  // A路天线接收信号强度
+	GainB   uint8  // B路天线接收信号强度
+}
+
+// GetPairResultOut 定义读取命令 BB_GET_PAIR_RESULT 的输出参数结构
+type GetPairResultOut struct {
+	SlotBmp uint8                // 配对成功的 SLOT 位置 bitmap
+	PeerMac [BB_SLOT_MAX]MacAddr // 对应 SLOT 上配对成功的 MAC 地址
+	Quality [BB_SLOT_MAX]Quality // 配对完成时的无线质量统计
+}

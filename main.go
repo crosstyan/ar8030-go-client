@@ -53,15 +53,9 @@ func main() {
 		}
 		mac, err := action.GetMac(conn, selId)
 		if err != nil {
-			log.Sugar().Panicw("failed to get MAC", "error", err.Error())
+			log.Sugar().Panicw("failed to get MAC", "id", selId, "error", err.Error())
 		}
-		log.Sugar().Infow("MAC", "mac", bb.MacLike(mac, ":"))
-		sockSta, err := action.QuerySockBufSta(conn, selId, int32(bb.BB_SLOT_0), 2)
-		if err != nil {
-			log.Sugar().Errorw("failed to get socket buffer status", "error", err.Error())
-		} else {
-			log.Sugar().Infow("socket buffer status", "status", sockSta)
-		}
+		log.Sugar().Infow("MAC", "id", selId, "mac", bb.MacLike(mac, ":"))
 	}
 
 	ctx := context.Background()

@@ -203,6 +203,9 @@ func GetMac(conn net.Conn, workId uint32) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	if resp.ReqId != bb.BB_RPC_GET_MAC {
+		return nil, errorx.ExternalError.New("unexpected request id %d", resp.ReqId)
+	}
 	if resp.Sta < 0 {
 		return nil, errorx.ExternalError.New("bad status %d", resp.Sta)
 	}

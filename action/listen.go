@@ -11,8 +11,9 @@ import (
 	"net"
 )
 
-// MoveRegisterHotPlug will TAKE OVER the connection (conn) i.e. the ownership of the connection is transferred to this function
-func MoveRegisterHotPlug(conn *net.TCPConn, ctx context.Context) (<-chan bb.UsbPack, error) {
+// SubscribeHotPlugMoveConn will TAKE OVER the connection (conn) i.e. the ownership of the connection is transferred to this function
+func SubscribeHotPlugMoveConn(conn *net.TCPConn, ctx context.Context) (<-chan bb.UsbPack, error) {
+	var TCPReadBufferSize = 4096
 	wbBuf := bb.NewBuffer(32)
 	pack := bb.UsbPack{
 		MsgId: 0,
@@ -51,7 +52,9 @@ func MoveRegisterHotPlug(conn *net.TCPConn, ctx context.Context) (<-chan bb.UsbP
 				close(ch)
 				return
 			default:
-				rBuf := make([]byte, 4096)
+				// TODO: we don't need such a big buffer
+				// https://mostafa.dev/why-do-tcp-connections-in-go-get-stuck-reading-large-amounts-of-data-f490a26a605e
+				rBuf := make([]byte, TCPReadBufferSize)
 				_, err := conn.Read(rBuf)
 				if err != nil {
 					log.Sugar().Errorw("failed to read from connection", "error", err.Error())
@@ -79,12 +82,13 @@ type SubscribedMessage struct {
 	Payload *bb.UsbPack
 }
 
-// SubscribeMessage will subscribe to a message to current connection
+// SubscribeMessageWithNewConn will subscribe to a message to current connection
 // see `cb_bb_ioctl` and `create_new_cb` in `session_callback.c`
 //
 // Please Note that this function will create a new connection based on the passed argument
 // The original will not be used or closed
-func SubscribeMessage(conn *net.TCPConn, ctx context.Context, workId uint32, event bb.Event) (<-chan SubscribedMessage, error) {
+func SubscribeMessageWithNewConn(conn *net.TCPConn, ctx context.Context, workId uint32, event bb.Event) (<-chan SubscribedMessage, error) {
+	var TCPReadBufferSize = 1024 * 16
 	reqId := bb.SubscribeRequestId(event)
 	pack := bb.UsbPack{
 		MsgId: workId,
@@ -117,7 +121,7 @@ func SubscribeMessage(conn *net.TCPConn, ctx context.Context, workId uint32, eve
 				close(ch)
 				return
 			default:
-				rBuf := make([]byte, 1024*16)
+				rBuf := make([]byte, TCPReadBufferSize)
 				_, err := conn.Read(rBuf)
 				if err != nil {
 					if errors.Is(err, io.EOF) {

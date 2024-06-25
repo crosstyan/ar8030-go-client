@@ -61,13 +61,10 @@ func main() {
 		log.Sugar().Panicw("failed to get work id list", "error", err.Error())
 	}
 	log.Sugar().Infow("work id list", "list", wrkList)
-
 	ctx := context.Background()
-	if err != nil {
-		log.Sugar().Panicw("failed to dial TCP", "error", err.Error())
-	}
 	subChs := make([]<-chan action.SubscribedMessage, 0)
-	handleDev := func(selId uint32) {
+	// handleDevice prints device info and subscribes to events
+	handleDevice := func(selId uint32) {
 		conn, err := bb.NewTCPFromConn(conn)
 		defer func() {
 			log.Sugar().Debugw("closing query connection", "id", selId)
@@ -100,19 +97,19 @@ func main() {
 				log.Sugar().Infow("event subscribed", "id", selId, "event", event)
 			}
 		}
-		ch1, err := action.SubscribeMessage(conn, ctx, selId, bb.BB_EVENT_LINK_STATE)
+		ch1, err := action.SubscribeMessageWithNewConn(conn, ctx, selId, bb.BB_EVENT_LINK_STATE)
 		logErr(err, selId, bb.BB_EVENT_LINK_STATE)
-		ch2, err := action.SubscribeMessage(conn, ctx, selId, bb.BB_EVENT_MCS_CHANGE)
+		ch2, err := action.SubscribeMessageWithNewConn(conn, ctx, selId, bb.BB_EVENT_MCS_CHANGE)
 		logErr(err, selId, bb.BB_EVENT_MCS_CHANGE)
-		ch3, err := action.SubscribeMessage(conn, ctx, selId, bb.BB_EVENT_CHAN_CHANGE)
+		ch3, err := action.SubscribeMessageWithNewConn(conn, ctx, selId, bb.BB_EVENT_CHAN_CHANGE)
 		logErr(err, selId, bb.BB_EVENT_CHAN_CHANGE)
-		ch4, err := action.SubscribeMessage(conn, ctx, selId, bb.BB_EVENT_OFFLINE)
+		ch4, err := action.SubscribeMessageWithNewConn(conn, ctx, selId, bb.BB_EVENT_OFFLINE)
 		logErr(err, selId, bb.BB_EVENT_OFFLINE)
 		subChs = append(subChs, ch1, ch2, ch3, ch4)
 	}
 
 	for _, selId := range wrkList {
-		handleDev(selId)
+		handleDevice(selId)
 	}
 
 	chs, _ := bb.MergeChannels(subChs...)
@@ -135,9 +132,9 @@ func main() {
 	if err != nil {
 		log.Sugar().Panicw("failed to dial TCP", "error", err.Error())
 	}
-	ch, err := action.MoveRegisterHotPlug(hotPlugConn, ctx)
+	ch, err := action.SubscribeHotPlugMoveConn(hotPlugConn, ctx)
 	if err != nil {
-		log.Sugar().Panicw("failed to register hot plug", "error", err.Error())
+		log.Sugar().Panicw("failed to subscribe hot plug event", "error", err.Error())
 	}
 	for {
 		pack, ok := <-ch

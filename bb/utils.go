@@ -53,6 +53,14 @@ func SubscribeRequestId(event Event) RequestId {
 	return RequestId(uint32(BB_REQ_CB)<<24 | SUBSCRIBE_REQ<<16 | uint32(event))
 }
 
+// SocketRequestId concatenates socket operation with slot and port to form a request id
+//
+// Please note that the socket here is not the network socket (TCP/UDP),
+// but a virtual socket in the device.
+func SocketRequestId(soCmd SoCmdOpt, slot Slot, port byte) RequestId {
+	return RequestId(4<<24 | uint32(soCmd)<<16 | uint32(slot)<<8 | uint32(port))
+}
+
 func NewBuffer(size uint) *bytes.Buffer {
 	return bytes.NewBuffer(make([]byte, 0, size))
 }

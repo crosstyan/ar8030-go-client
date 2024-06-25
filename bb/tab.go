@@ -182,3 +182,8 @@ type GetPairResultOut struct {
 	PeerMac [BB_SLOT_MAX]MacAddr // 对应 SLOT 上配对成功的 MAC 地址
 	Quality [BB_SLOT_MAX]Quality // 配对完成时的无线质量统计
 }
+
+type SockOpt struct {
+	TxBufSize uint32 // 用于指定发送 buffer 的大小，创建的 socket 具备 TX 属性时有效
+	RxBufSize uint32 // 用于指定接收 buffer 的大小，创建的 socket 具备 RX 属性时有效
+}

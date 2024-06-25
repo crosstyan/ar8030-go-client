@@ -1,6 +1,6 @@
 # Code analysis of AR8030 client
 
-I don't plan to rewrite the daemon but
+I don't plan to rewrite the daemon, but
 I do need to reimplement the client.
 I can't bare C code, it's hard to read.
 

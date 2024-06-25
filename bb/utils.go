@@ -68,11 +68,12 @@ func NewTCPFromConn(conn *net.TCPConn) (*net.TCPConn, error) {
 }
 
 // MergeChannels merges multiple channels into one channel
+//
 // TODO: find a way to add channel to the merge group after the merge group is created
-// https://go.dev/blog/pipelines
-// https://medium.com/justforfunc/two-ways-of-merging-n-channels-in-go-43c0b57cd1de
-// https://medium.com/justforfunc/analyzing-the-performance-of-go-functions-with-benchmarks-60b8162e61c6
-func MergeChannels[T any](cs ...<-chan T) <-chan T {
+//   - https://go.dev/blog/pipelines
+//   - https://medium.com/justforfunc/two-ways-of-merging-n-channels-in-go-43c0b57cd1de
+//   - https://medium.com/justforfunc/analyzing-the-performance-of-go-functions-with-benchmarks-60b8162e61c6
+func MergeChannels[T any](cs ...<-chan T) (<-chan T, func(...<-chan T)) {
 	out := make(chan T)
 	var wg sync.WaitGroup
 	wg.Add(len(cs))
@@ -84,9 +85,61 @@ func MergeChannels[T any](cs ...<-chan T) <-chan T {
 			wg.Done()
 		}(c)
 	}
+	addChannels := func(cs ...<-chan T) {
+		wg.Add(len(cs))
+		for _, c := range cs {
+			go func(c <-chan T) {
+				for v := range c {
+					out <- v
+				}
+				wg.Done()
+			}(c)
+		}
+	}
 	go func() {
 		wg.Wait()
 		close(out)
 	}()
-	return out
+	return out, addChannels
+}
+
+func mergeTwo[T any](a, b <-chan T) <-chan T {
+	c := make(chan T)
+
+	go func() {
+		defer close(c)
+		for a != nil || b != nil {
+			select {
+			case v, ok := <-a:
+				if !ok {
+					a = nil
+					continue
+				}
+				c <- v
+			case v, ok := <-b:
+				if !ok {
+					b = nil
+					continue
+				}
+				c <- v
+			}
+		}
+	}()
+	return c
+}
+
+func RecursiveMergeChannels[T any](chs ...<-chan T) <-chan T {
+	switch len(chs) {
+	case 0:
+		c := make(chan T)
+		close(c)
+		return c
+	case 1:
+		return chs[0]
+	default:
+		m := len(chs) / 2
+		return mergeTwo(
+			RecursiveMergeChannels(chs[:m]...),
+			RecursiveMergeChannels(chs[m:]...))
+	}
 }

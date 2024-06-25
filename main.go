@@ -102,7 +102,7 @@ func main() {
 		handleHotPlugEvent(&pack)
 	}
 
-	chans := bb.MergeChannels(subChs...)
+	chs, _ := bb.MergeChannels(subChs...)
 	go func(ch <-chan action.SubscribedMessage, ctx context.Context) {
 		for {
 			select {
@@ -116,38 +116,41 @@ func main() {
 				log.Sugar().Infow("subscribed message", "message", msg)
 			}
 		}
-	}(chans, ctx)
+	}(chs, ctx)
 
-	// 0x3fff is a magic value, no idea why it's chosen
-	//st, err := action.GetStatus(conn, selId, 0x3fff)
-	//if err != nil {
-	//	log.Sugar().Panicw("failed to get status", "error", err.Error())
-	//}
-	//log.Sugar().Infow("status", "status", st)
-	//sysInfo, err := action.GetSysInfo(conn, selId)
-	//if err != nil {
-	//	log.Sugar().Panicw("failed to get system info", "error", err.Error())
-	//}
-	//log.Sugar().Infow("system info", "info", sysInfo)
-	//
-	//oCfg, err := action.GetTotalCfg(conn, selId)
-	//if err != nil {
-	//	log.Sugar().Panicw("failed to get configuration", "error", err.Error())
-	//}
-	//sCfg := string(oCfg)
-	//log.Sugar().Infow("configuration", "len", len(sCfg))
-	//f, err := os.Create("config.json")
-	//if err != nil {
-	//	log.Sugar().Panicw("failed to create file", "error", err.Error())
-	//}
-	//defer func(f *os.File) {
-	//	err = f.Close()
-	//	if err != nil {
-	//		log.Sugar().Panicw("failed to close file", "error", err.Error())
-	//	}
-	//}(f)
-	//_, err = f.WriteString(sCfg)
-	//if err != nil {
-	//	log.Sugar().Panicw("failed to write to file", "error", err.Error())
-	//}
+	// useless... for now
+	_ = func(selId uint32) {
+		// 0x3fff is a magic value, no idea why it's chosen
+		st, err := action.GetStatus(conn, selId, 0x3fff)
+		if err != nil {
+			log.Sugar().Panicw("failed to get status", "error", err.Error())
+		}
+		log.Sugar().Infow("status", "status", st)
+		sysInfo, err := action.GetSysInfo(conn, selId)
+		if err != nil {
+			log.Sugar().Panicw("failed to get system info", "error", err.Error())
+		}
+		log.Sugar().Infow("system info", "info", sysInfo)
+
+		oCfg, err := action.GetFullCfg(conn, selId)
+		if err != nil {
+			log.Sugar().Panicw("failed to get configuration", "error", err.Error())
+		}
+		sCfg := string(oCfg)
+		log.Sugar().Infow("configuration", "len", len(sCfg))
+		f, err := os.Create("config.json")
+		if err != nil {
+			log.Sugar().Panicw("failed to create file", "error", err.Error())
+		}
+		defer func(f *os.File) {
+			err = f.Close()
+			if err != nil {
+				log.Sugar().Panicw("failed to close file", "error", err.Error())
+			}
+		}(f)
+		_, err = f.WriteString(sCfg)
+		if err != nil {
+			log.Sugar().Panicw("failed to write to file", "error", err.Error())
+		}
+	}
 }

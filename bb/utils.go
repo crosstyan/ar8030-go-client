@@ -34,3 +34,18 @@ func PrintAsClangArray(data []byte) {
 	}
 	fmt.Println("};")
 }
+
+func MacLike(data []byte, sep string) string {
+	var ss string
+	for i, b := range data {
+		ss += fmt.Sprintf("%02x", b)
+		if i < len(data)-1 {
+			ss += sep
+		}
+	}
+	return ss
+}
+
+func NewBuffer(size uint) *bytes.Buffer {
+	return bytes.NewBuffer(make([]byte, 0, size))
+}

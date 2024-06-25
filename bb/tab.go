@@ -1,5 +1,13 @@
 package bb
 
+import (
+	"bytes"
+	"encoding/binary"
+	"fmt"
+	"github.com/joomcode/errorx"
+	"strings"
+)
+
 type IoCtlEntry struct {
 	Req   RequestId
 	ISize uint
@@ -76,6 +84,64 @@ type GetCfgOut struct {
 	Offset      uint16 // 设置基带配置文件偏移量
 	Length      uint16 // 设置基带配置文件的字节长度
 	Data        [BB_CFG_PAGE_SIZE - 12]uint8
+}
+
+// DevInfo is the real immutable MAC address
+// Different from MacAddr, which only used for communication (4 bytes) and can be changed arbitrarily
+type DevInfo struct {
+	Mac    [32]byte
+	MacLen int32
+}
+
+type EventHotPlug struct {
+	Id     uint32
+	Status uint32
+	BbMac  DevInfo
+}
+
+func (ip *DevInfo) DevMac() []byte {
+	return ip.Mac[:ip.MacLen]
+}
+
+func (ip *DevInfo) String() string {
+	ss := new(strings.Builder)
+	m := ip.DevMac()
+	for i, b := range m {
+		ss.WriteString(fmt.Sprintf("%02x", b))
+		if i < len(m)-1 {
+			ss.WriteString(":")
+		}
+	}
+	return ss.String()
+}
+
+func (e *EventHotPlug) Read(r *bytes.Buffer) error {
+	if err := binary.Read(r, binary.LittleEndian, &e.Id); err != nil {
+		return errorx.Decorate(err, "failed to read id")
+	}
+	if err := binary.Read(r, binary.LittleEndian, &e.Status); err != nil {
+		return errorx.Decorate(err, "failed to read status")
+	}
+	if err := binary.Read(r, binary.LittleEndian, &e.BbMac.Mac); err != nil {
+		return errorx.Decorate(err, "failed to read mac")
+	}
+	if err := binary.Read(r, binary.LittleEndian, &e.BbMac.MacLen); err != nil {
+		return errorx.Decorate(err, "failed to read mac length")
+	}
+	return nil
+}
+
+// QueryTxIn is the input of BB_RPC_SOCK_BUF_STA
+type QueryTxIn struct {
+	Slot int32
+	Port int32
+}
+
+// QueryTxOut is the output of BB_RPC_SOCK_BUF_STA
+type QueryTxOut struct {
+	BuffIndex uint64
+	BuffLen   int32
+	BuffAvail int32
 }
 
 // SetPairModeIn implements the input parameter of BB_SET_PAIR_MODE

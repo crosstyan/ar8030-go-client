@@ -21,7 +21,7 @@ func (p *UsbPack) Write(buf *bytes.Buffer) error {
 	offsetS := buf.Len()
 	packetSz := UsbPackHeaderSize + len(p.Buf)
 	if buf.Available() < packetSz {
-		return errorx.IllegalArgument.New("buffer is too small, expecting %d, got %d", UsbPackHeaderSize+len(p.Buf), buf.Len())
+		return errorx.IllegalArgument.New("buffer is too small, expecting %d, got %d", UsbPackHeaderSize+len(p.Buf), buf.Available())
 	}
 
 	buf.WriteByte(0xaa)

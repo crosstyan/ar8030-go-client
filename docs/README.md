@@ -140,3 +140,11 @@ See also `PF_AR8030_Init` in `pf_ar8030.c` for the initialization of the client.
 ## Daemon
 
 `rpc_recv_chk_init` runs in a separate thread for each TCP connection.
+
+## Datagram
+
+See `make_datagram_pack2buff`.
+
+```text
+0xab, datalen (4 bytes, little-endian), xor check (until current byte), actual data (with length of `datalen`), 0xbc
+```

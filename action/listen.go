@@ -5,7 +5,9 @@ import (
 	"ar8030/log"
 	"bytes"
 	"context"
+	"errors"
 	"github.com/joomcode/errorx"
+	"io"
 	"net"
 )
 
@@ -73,12 +75,15 @@ func MoveRegisterHotPlug(conn *net.TCPConn, ctx context.Context) (<-chan bb.UsbP
 
 type SubscribedMessage struct {
 	Event   bb.Event
+	WorkId  uint32
 	Payload *bb.UsbPack
-	WordId  uint32
 }
 
 // SubscribeMessage will subscribe to a message to current connection
 // see `cb_bb_ioctl` and `create_new_cb` in `session_callback.c`
+//
+// Please Note that this function will create a new connection based on the passed argument
+// The original will not be used or closed
 func SubscribeMessage(conn *net.TCPConn, ctx context.Context, workId uint32, event bb.Event) (<-chan SubscribedMessage, error) {
 	reqId := bb.SubscribeRequestId(event)
 	pack := bb.UsbPack{
@@ -115,21 +120,30 @@ func SubscribeMessage(conn *net.TCPConn, ctx context.Context, workId uint32, eve
 				rBuf := make([]byte, 1024*16)
 				_, err := conn.Read(rBuf)
 				if err != nil {
-					log.Sugar().Errorw("failed to read from connection", "error", err.Error())
-					close(ch)
+					if errors.Is(err, io.EOF) {
+						log.Sugar().Infow("connection closed", "id", workId, "event", event)
+						close(ch)
+					} else {
+						log.Sugar().Errorw("failed to read from connection, closing channel", "id", workId, "event", event, "error", err.Error())
+						err = conn.Close()
+						if err != nil {
+							log.Sugar().Errorw("failed to close connection", "id", workId, "event", event, "error", err.Error())
+						}
+						close(ch)
+					}
 					return
 				}
 				rbBuf := bytes.NewBuffer(rBuf)
 				resp := &bb.UsbPack{}
 				err = resp.Read(rbBuf)
 				if err != nil {
-					log.Sugar().Errorw("failed to unmarshal response", "error", err.Error())
+					log.Sugar().Errorw("failed to unmarshal response", "id", workId, "event", event, "error", err.Error(), "payload", rBuf)
 					continue
 				}
 				m := SubscribedMessage{
 					Event:   event,
 					Payload: resp,
-					WordId:  workId,
+					WorkId:  workId,
 				}
 				ch <- m
 			}

@@ -70,3 +70,70 @@ func MoveRegisterHotPlug(conn *net.TCPConn, ctx context.Context) (<-chan bb.UsbP
 	}()
 	return ch, nil
 }
+
+type SubscribedMessage struct {
+	Event   bb.Event
+	Payload *bb.UsbPack
+	WordId  uint32
+}
+
+// SubscribeMessage will subscribe to a message to current connection
+// see `cb_bb_ioctl` and `create_new_cb` in `session_callback.c`
+func SubscribeMessage(conn *net.TCPConn, ctx context.Context, workId uint32, event bb.Event) (<-chan SubscribedMessage, error) {
+	reqId := bb.SubscribeRequestId(event)
+	pack := bb.UsbPack{
+		MsgId: workId,
+		ReqId: reqId,
+		Sta:   0,
+	}
+	wbBuf := bb.NewBuffer(32)
+	err := pack.Write(wbBuf)
+	if err != nil {
+		return nil, err
+	}
+	newConn, err := bb.NewTCPFromConn(conn)
+	if err != nil {
+		return nil, err
+	}
+	_, err = newConn.Write(wbBuf.Bytes())
+	if err != nil {
+		_ = newConn.Close()
+		return nil, err
+	}
+	ch := make(chan SubscribedMessage)
+	go func(conn *net.TCPConn, ctx context.Context) {
+		for {
+			select {
+			case <-ctx.Done():
+				err = conn.Close()
+				if err != nil {
+					log.Sugar().Errorw("failed to close connection", "error", err.Error())
+				}
+				close(ch)
+				return
+			default:
+				rBuf := make([]byte, 1024*16)
+				_, err := conn.Read(rBuf)
+				if err != nil {
+					log.Sugar().Errorw("failed to read from connection", "error", err.Error())
+					close(ch)
+					return
+				}
+				rbBuf := bytes.NewBuffer(rBuf)
+				resp := &bb.UsbPack{}
+				err = resp.Read(rbBuf)
+				if err != nil {
+					log.Sugar().Errorw("failed to unmarshal response", "error", err.Error())
+					continue
+				}
+				m := SubscribedMessage{
+					Event:   event,
+					Payload: resp,
+					WordId:  workId,
+				}
+				ch <- m
+			}
+		}
+	}(newConn, ctx)
+	return ch, nil
+}

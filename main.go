@@ -40,9 +40,13 @@ func main() {
 		log.Sugar().Panicw("failed to get work id list", "error", err.Error())
 	}
 	log.Sugar().Infow("work id list", "list", wrkList)
-	var selId uint32 = 0
-	if len(wrkList) != 0 {
-		selId = wrkList[0]
+
+	ctx := context.Background()
+	if err != nil {
+		log.Sugar().Panicw("failed to dial TCP", "error", err.Error())
+	}
+	subChs := make([]<-chan action.SubscribedMessage, 0)
+	for _, selId := range wrkList {
 		ok, err := action.SelectWorkId(conn, selId)
 		if err != nil {
 			log.Sugar().Panicw("failed to test work id", "error", err.Error(), "id", selId)
@@ -56,10 +60,27 @@ func main() {
 			log.Sugar().Panicw("failed to get MAC", "id", selId, "error", err.Error())
 		}
 		log.Sugar().Infow("MAC", "id", selId, "mac", bb.MacLike(mac, ":"))
+		logErr := func(err error, event bb.Event) {
+			if err != nil {
+				log.Sugar().Errorw("failed to subscribe message", "error", err.Error(), "event", event)
+			}
+		}
+		ch1, err := action.SubscribeMessage(conn, ctx, selId, bb.BB_EVENT_LINK_STATE)
+		logErr(err, bb.BB_EVENT_LINK_STATE)
+		ch2, err := action.SubscribeMessage(conn, ctx, selId, bb.BB_EVENT_MCS_CHANGE)
+		logErr(err, bb.BB_EVENT_MCS_CHANGE)
+		ch3, err := action.SubscribeMessage(conn, ctx, selId, bb.BB_EVENT_CHAN_CHANGE)
+		logErr(err, bb.BB_EVENT_CHAN_CHANGE)
+		ch4, err := action.SubscribeMessage(conn, ctx, selId, bb.BB_EVENT_OFFLINE)
+		logErr(err, bb.BB_EVENT_OFFLINE)
+		subChs = append(subChs, ch1, ch2, ch3, ch4)
 	}
 
-	ctx := context.Background()
-	ch, err := action.MoveRegisterHotPlug(conn, ctx)
+	hotPlugConn, err := bb.NewTCPFromConn(conn)
+	if err != nil {
+		log.Sugar().Panicw("failed to dial TCP", "error", err.Error())
+	}
+	ch, err := action.MoveRegisterHotPlug(hotPlugConn, ctx)
 	if err != nil {
 		log.Sugar().Panicw("failed to register hot plug", "error", err.Error())
 	}
@@ -80,6 +101,22 @@ func main() {
 		}
 		handleHotPlugEvent(&pack)
 	}
+
+	chans := bb.MergeChannels(subChs...)
+	go func(ch <-chan action.SubscribedMessage, ctx context.Context) {
+		for {
+			select {
+			case <-ctx.Done():
+				log.Sugar().Debug("context done")
+				return
+			case msg, ok := <-ch:
+				if !ok {
+					return
+				}
+				log.Sugar().Infow("subscribed message", "message", msg)
+			}
+		}
+	}(chans, ctx)
 
 	// 0x3fff is a magic value, no idea why it's chosen
 	//st, err := action.GetStatus(conn, selId, 0x3fff)

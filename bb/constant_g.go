@@ -48,8 +48,8 @@ const BB_GET_PRJ_DISPATCH RequestId = 0x010000c8     /** 二级GET命令分发 *
 
 // BB_SET_EVENT_SUBSCRIBE is only used in client
 // See [SubscribeRequestId]
-const BB_SET_EVENT_SUBSCRIBE RequestId = 0x02000000           /** 事件订阅类型命令字 */
-const BB_SET_EVENT_UNSUBSCRIBE RequestId = 0x02000001         /** 事件反订阅类型命令字 */
+// const BB_SET_EVENT_SUBSCRIBE RequestId = 0x02000000           /** 事件订阅类型命令字 */
+// const BB_SET_EVENT_UNSUBSCRIBE RequestId = 0x02000001         /** 事件反订阅类型命令字 */
 const BB_SET_PAIR_MODE RequestId = 0x02000002                 /** 设置指定SLOT进入配对模式命令字 */
 const BB_SET_AP_MAC RequestId = 0x02000003                    /** DEV设置AP的MAC命令字 */
 const BB_SET_CANDIDATES RequestId = 0x02000004                /** AP设置候选人命令字 */

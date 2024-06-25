@@ -3,6 +3,8 @@ package bb
 import (
 	"bytes"
 	"fmt"
+	"net"
+	"sync"
 )
 
 func xorCheck(buff []byte) uint8 {
@@ -46,6 +48,45 @@ func MacLike(data []byte, sep string) string {
 	return ss
 }
 
+// SubscribeRequestId concatenates event type with other information to form a request id
+func SubscribeRequestId(event Event) RequestId {
+	return RequestId(uint32(BB_REQ_CB)<<24 | SUBSCRIBE_REQ<<16 | uint32(event))
+}
+
 func NewBuffer(size uint) *bytes.Buffer {
 	return bytes.NewBuffer(make([]byte, 0, size))
+}
+
+// NewTCPFromConn creates a new TCP connection from an existing connection
+func NewTCPFromConn(conn *net.TCPConn) (*net.TCPConn, error) {
+	addr := conn.RemoteAddr()
+	conn, err := net.DialTCP("tcp", nil, addr.(*net.TCPAddr))
+	if err != nil {
+		return nil, err
+	}
+	return conn, nil
+}
+
+// MergeChannels merges multiple channels into one channel
+// TODO: find a way to add channel to the merge group after the merge group is created
+// https://go.dev/blog/pipelines
+// https://medium.com/justforfunc/two-ways-of-merging-n-channels-in-go-43c0b57cd1de
+// https://medium.com/justforfunc/analyzing-the-performance-of-go-functions-with-benchmarks-60b8162e61c6
+func MergeChannels[T any](cs ...<-chan T) <-chan T {
+	out := make(chan T)
+	var wg sync.WaitGroup
+	wg.Add(len(cs))
+	for _, c := range cs {
+		go func(c <-chan T) {
+			for v := range c {
+				out <- v
+			}
+			wg.Done()
+		}(c)
+	}
+	go func() {
+		wg.Wait()
+		close(out)
+	}()
+	return out
 }

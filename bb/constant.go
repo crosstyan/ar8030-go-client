@@ -44,6 +44,7 @@ const (
 	BB_REQ_PLAT_CTL  DomainId = 12
 )
 
+// Note that daemon will subscribe 0...9 except 5
 const (
 	BB_EVENT_LINK_STATE     Event = iota // 链路状态发生变化事件
 	BB_EVENT_MCS_CHANGE                  // MCS等级发生变化事件
@@ -378,8 +379,3 @@ const (
 	BB_CONFIG_LINK_BY_GROUPID         = 0     // 分组配对开关(for hyy)
 	BB_CONFIG_ENABLE_RF_FILTER_PATCH  = 0     // 使能RF滤波patch
 )
-
-// SubscribeRequestId concatenates event type with other information to form a request id
-func SubscribeRequestId(event Event) RequestId {
-	return RequestId(uint32(BB_REQ_CB)<<24 | SUBSCRIBE_REQ<<16 | uint32(event))
-}

@@ -1,5 +1,7 @@
 package bb
 
+import "fmt"
+
 type RequestId uint32 // RequestId has 24 bit req id, 8 bit domain id
 type SubCmd uint32    // SubCmd only use 24 bit
 
@@ -90,6 +92,17 @@ const (
 	BB_ROLE_DEV             // Network leaf device
 	BB_ROLE_MAX
 )
+
+func (r Role) String() string {
+	switch r {
+	case BB_ROLE_AP:
+		return "AP"
+	case BB_ROLE_DEV:
+		return "DEV"
+	default:
+		return fmt.Sprintf("Unknown(%d)", r)
+	}
+}
 
 type Mode byte
 

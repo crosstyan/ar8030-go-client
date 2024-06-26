@@ -63,7 +63,14 @@ func OpenSocket(conn net.Conn, workId uint32, slot bb.Slot, port byte, flags bb.
 //   - slot 目标SLOT, 如果为DEV，目标SLOT均为BB_SLOT_AP, See bb.Slot
 //   - port 逻辑端口，不同端口的数据互相独立，port 的数量受配置宏 bb.BB_CONFIG_MAX_TRANSPORT_PER_SLOT 控制
 //
+// note that the socket will reply with `ReqId=0x04010003` (which has `bb.SoCmdOpt`=bb.SoRead)
+// and its Sta is the number of bytes written (but buffer will be empty for sure)
+// This function WON'T check the response and just fire the request
+// The response should be handled by the caller (usually another goroutine for reading from the socket)
+//
 // TODO: find out what `datagram` means
+// TODO: check for payload length (See bb.SockOpt)
+// See also bb.BB_CONFIG_MAC_TX_BUF_SIZE and bb.BB_CONFIG_MAC_RX_BUF_SIZE
 func WriteSocket(conn net.Conn, workId uint32, slot bb.Slot, port byte, payload []byte) error {
 	pack := bb.UsbPack{
 		MsgId: workId,
@@ -90,13 +97,26 @@ type RxMessage struct {
 	Payload []byte
 }
 
-// HandleSocketRx implements `so_rpc_cb`
-func HandleSocketRx(pack *bb.UsbPack) (*RxMessage, error) {
-	opt := bb.SoCmdOpt(pack.ReqId >> 16 & 0xff)
-	slot := bb.Slot(pack.ReqId >> 8 & 0xff)
-	port := byte(pack.ReqId & 0xff)
+type SockHeader struct {
+	Opt  bb.SoCmdOpt
+	Slot bb.Slot
+	Port byte
+}
+
+func SockHeaderFromReqId(reqId bb.RequestId) SockHeader {
+	return SockHeader{
+		Opt:  bb.SoCmdOpt(reqId >> 16 & 0xff),
+		Slot: bb.Slot(reqId >> 8 & 0xff),
+		Port: byte(reqId & 0xff),
+	}
+}
+
+// UnwrapSocketRx implements `so_rpc_cb`
+func UnwrapSocketRx(pack *bb.UsbPack) (*RxMessage, error) {
+	h := SockHeaderFromReqId(pack.ReqId)
+	opt, slot, port := h.Opt, h.Slot, h.Port
 	if opt != bb.SoRead {
-		return nil, errorx.IllegalState.New("not a read command")
+		return nil, errorx.IllegalState.New("not a read command; opt=0x%02x; reqid=0x%08x", opt, pack.ReqId)
 	}
 	return &RxMessage{
 		Slot:    slot,
@@ -105,6 +125,8 @@ func HandleSocketRx(pack *bb.UsbPack) (*RxMessage, error) {
 	}, nil
 }
 
+// CloseSocket implements `bb_socket_close` but actually does nothing
+// since you only needs to close the underlying connection
 func CloseSocket(conn net.Conn, workId uint32, slot bb.Slot, port byte) error {
 	return nil
 }

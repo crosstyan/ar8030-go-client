@@ -39,11 +39,35 @@ func printDeviceInfo(conn net.Conn, selId uint32) error {
 	// port 2 can only be open at DEV role, AP can't read from it (-259)
 	// port 3 seems to work
 	var comPort byte = 3
+	recvLoop := func(sktConn net.Conn, selId uint32, role bb.Role) {
+		for {
+			rBuf := make([]byte, 2048)
+			rbBuf := bytes.NewBuffer(rBuf)
+			_, err := sktConn.Read(rBuf)
+			if err != nil {
+				log.Sugar().Errorw("failed to read from socket", "id", selId, "role", role, "error", err.Error())
+				return
+			}
+			pack := bb.UsbPack{}
+			err = pack.Read(rbBuf)
+			if err != nil {
+				log.Sugar().Errorw("failed to read pack", "id", selId, "role", role, "error", err.Error())
+				return
+			}
+			hdr := action.SockHeaderFromReqId(pack.ReqId)
+			if hdr.Opt == bb.SoRead {
+				msg, _ := action.UnwrapSocketRx(&pack)
+				if msg != nil {
+					log.Sugar().Infow("socket rx", "id", selId, "message", string(msg.Payload))
+				}
+			}
+		}
+	}
 	go func() {
 		if st.Role == bb.BB_ROLE_DEV {
 			sktConn, err := bb.NewTCPFromConn(conn.(*net.TCPConn))
 			defer func() {
-				log.Sugar().Debugw("closing socket connection", "id", selId, "role", "DEV")
+				log.Sugar().Debugw("closing socket connection", "id", selId, "role", st.Role)
 				err = sktConn.Close()
 				if err != nil {
 					log.Sugar().Errorw("failed to close connection", "error", err.Error())
@@ -60,20 +84,21 @@ func printDeviceInfo(conn net.Conn, selId uint32) error {
 				log.Sugar().Errorw("failed to open socket", "id", selId, "error", err.Error())
 				return
 			}
-			log.Sugar().Infow("socket opened", "id", selId, "slot", slot, "port", port, "role", "DEV")
+			log.Sugar().Infow("socket opened", "id", selId, "slot", slot, "port", port, "role", st.Role)
+			go recvLoop(sktConn, selId, st.Role)
 			for {
-				var m = []byte("hello")
+				var m = []byte("hello from dev")
 				err = action.WriteSocket(sktConn, selId, slot, port, m)
 				if err != nil {
-					log.Sugar().Errorw("failed to write to socket", "id", selId, "error", err.Error())
+					log.Sugar().Errorw("failed to write to socket", "id", selId, "role", st.Role, "error", err.Error())
 				}
-				log.Sugar().Infow("socket tx", "id", selId, "message", string(m))
+				log.Sugar().Infow("socket tx", "id", selId, "role", st.Role, "message", string(m))
 				time.Sleep(1 * time.Second)
 			}
 		} else if st.Role == bb.BB_ROLE_AP {
 			sktConn, err := bb.NewTCPFromConn(conn.(*net.TCPConn))
 			defer func() {
-				log.Sugar().Debugw("closing socket connection", "id", selId, "role", "AP")
+				log.Sugar().Debugw("closing socket connection", "id", selId, "role", st.Role)
 				err = sktConn.Close()
 				if err != nil {
 					log.Sugar().Errorw("failed to close connection", "error", err.Error())
@@ -90,26 +115,16 @@ func printDeviceInfo(conn net.Conn, selId uint32) error {
 				log.Sugar().Errorw("failed to open socket", "id", selId, "error", err.Error())
 				return
 			}
-			log.Sugar().Infow("socket opened", "id", selId, "slot", slot, "port", port, "role", "AP")
+			log.Sugar().Infow("socket opened", "id", selId, "slot", slot, "port", port, "role", st.Role)
+			go recvLoop(sktConn, selId, st.Role)
 			for {
-				rBuf := make([]byte, 2048)
-				rbBuf := bytes.NewBuffer(rBuf)
-				_, err := sktConn.Read(rBuf)
+				var m = []byte("hello from ap")
+				err = action.WriteSocket(sktConn, selId, slot, port, m)
 				if err != nil {
-					log.Sugar().Errorw("failed to read from socket", "id", selId, "error", err.Error())
-					return
+					log.Sugar().Errorw("failed to write to socket", "id", selId, "role", st.Role, "error", err.Error())
 				}
-				pack := bb.UsbPack{}
-				err = pack.Read(rbBuf)
-				if err != nil {
-					log.Sugar().Errorw("failed to read pack", "id", selId, "error", err.Error())
-					return
-				}
-				msg, err := action.HandleSocketRx(&pack)
-				if err != nil {
-					log.Sugar().Errorw("failed to handle socket rx", "id", selId, "error", err.Error())
-				}
-				log.Sugar().Infow("socket rx", "id", selId, "message", msg)
+				log.Sugar().Infow("socket tx", "id", selId, "role", st.Role, "message", string(m))
+				time.Sleep(2*time.Second + 500*time.Millisecond)
 			}
 		}
 	}()

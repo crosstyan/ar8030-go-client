@@ -90,7 +90,6 @@ func GetWorkIdList(conn net.Conn) ([]uint32, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Sugar().Debugw("response", "resp", resp)
 	rBuf := bytes.NewBuffer(resp.Buf)
 
 	workIdList := make([]uint32, 0)

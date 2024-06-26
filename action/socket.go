@@ -64,6 +64,8 @@ func QuerySockBufSta(conn net.Conn, workId uint32, slot bb.Slot, port byte) (*bb
 //   - slot 目标SLOT, 如果为DEV，目标SLOT均为BB_SLOT_AP, See bb.Slot
 //   - port 逻辑端口，不同端口的数据互相独立，port 的数量受 bb.BB_CONFIG_MAX_TRANSPORT_PER_SLOT 控制
 //   - flags 传输标志，可以是 bb.BB_SOCK_FLAG_TX, bb.BB_SOCK_FLAG_RX, bb.BB_SOCK_FLAG_DATAGRAMSockFlag
+//
+// TODO: wrap as channel
 func OpenSocket(conn net.Conn, workId uint32, slot bb.Slot, port byte, flags bb.SockFlag, opt *bb.SockOpt) error {
 	defaultOpt := bb.SockOpt{
 		TxBufSize: bb.BB_CONFIG_MAC_TX_BUF_SIZE,

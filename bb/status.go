@@ -9,7 +9,7 @@ import (
 )
 
 // UnsafeFromByteSlice is a helper function to convert a byte slice to a struct
-// since it's casting a byte slice without any proper validation, it's unsafe
+// since it's casting a byte slice without any proper validation, it's unsafe.
 // It's expecting a C like alignment of the binary data, in native endian
 func UnsafeFromByteSlice[T any](data []byte) T {
 	return *(*T)(unsafe.Pointer(&data[0]))
@@ -51,12 +51,12 @@ func MacToString(mac *MacAddr) string {
 
 func (s *PhyStatus) String() string {
 	ss := new(strings.Builder)
-	_, _ = fmt.Fprintf(ss, "{Mcs:%d, ", s.Mcs)
+	_, _ = fmt.Fprintf(ss, "{Mcs:%s, ", s.Mcs.String())
 	_, _ = fmt.Fprintf(ss, "RfMode:%d, ", s.RfMode)
-	_, _ = fmt.Fprintf(ss, "TintlvEnable:%d, ", s.TintlvEnable)
-	_, _ = fmt.Fprintf(ss, "TintlvNum:%d, ", s.TintlvNum)
-	_, _ = fmt.Fprintf(ss, "TintlvLen:%d, ", s.TintlvLen)
-	_, _ = fmt.Fprintf(ss, "Bandwidth:%d, ", s.Bandwidth)
+	_, _ = fmt.Fprintf(ss, "TintlvEnable:%s, ", s.TintlvEnable.String())
+	_, _ = fmt.Fprintf(ss, "TintlvNum:%s, ", s.TintlvNum.String())
+	_, _ = fmt.Fprintf(ss, "TintlvLen:%s, ", s.TintlvLen.String())
+	_, _ = fmt.Fprintf(ss, "Bandwidth:%s, ", s.Bandwidth.String())
 	_, _ = fmt.Fprintf(ss, "FreqKhz:%d}", s.FreqKhz)
 	return ss.String()
 }
@@ -70,16 +70,16 @@ func (s *UserStatus) String() string {
 
 func (s *LinkStatus) String() string {
 	ss := new(strings.Builder)
-	_, _ = fmt.Fprintf(ss, "{State:%d, ", s.State)
-	_, _ = fmt.Fprintf(ss, "RxMcs:%d, ", s.RxMcs)
+	_, _ = fmt.Fprintf(ss, "{State:%s, ", s.State.String())
+	_, _ = fmt.Fprintf(ss, "RxMcs:%s, ", s.RxMcs.String())
 	_, _ = fmt.Fprintf(ss, "PeerMac:%s}", MacToString(&s.PeerMac))
 	return ss.String()
 }
 
 func (s *GetStatusOut) String() string {
 	ss := new(strings.Builder)
-	_, _ = fmt.Fprintf(ss, "{Role:%d, ", s.Role)
-	_, _ = fmt.Fprintf(ss, "Mode:%d, ", s.Mode)
+	_, _ = fmt.Fprintf(ss, "{Role:%s, ", s.Role.String())
+	_, _ = fmt.Fprintf(ss, "Mode:%s, ", s.Mode.String())
 	_, _ = fmt.Fprintf(ss, "SyncMode:%d, ", s.SyncMode)
 	_, _ = fmt.Fprintf(ss, "SyncMaster:%d, ", s.SyncMaster)
 	_, _ = fmt.Fprintf(ss, "CfgSbmp:%d, ", s.CfgSbmp)

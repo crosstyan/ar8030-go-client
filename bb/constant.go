@@ -100,7 +100,7 @@ func (r Role) String() string {
 	case BB_ROLE_DEV:
 		return "DEV"
 	default:
-		return fmt.Sprintf("Unknown(%d)", r)
+		return fmt.Sprintf("Unknown Role(%d)", r)
 	}
 }
 
@@ -113,6 +113,21 @@ const (
 	BB_MODE_DIRECTOR                // 导演模式, 一对多可靠广播模式, 不支持MCS负数
 	BB_MODE_MAX
 )
+
+func (m Mode) String() string {
+	switch m {
+	case BB_MODE_SINGLE_USER:
+		return "Single User"
+	case BB_MODE_MULTI_USER:
+		return "Multi User"
+	case BB_MODE_RELAY:
+		return "Relay"
+	case BB_MODE_DIRECTOR:
+		return "Director"
+	default:
+		return fmt.Sprintf("Unknown Mode(%d)", m)
+	}
+}
 
 type PhyMcs byte
 
@@ -144,6 +159,63 @@ const (
 	BB_PHY_MCS_22                  // 64QAM  CR_3/4 REP_1 dual stream
 	BB_PHY_MCS_MAX
 )
+
+func (m PhyMcs) String() string {
+	switch m {
+	case BB_PHY_MCS_NEG_2:
+		return "BPSK CR=1/2 REP=4 single stream (MCS -2)"
+	case BB_PHY_MCS_NEG_1:
+		return "BPSK CR=1/2 REP=2 single stream (MCS -1)"
+	case BB_PHY_MCS_0:
+		return "BPSK CR=1/2 REP=1 single stream (MCS 0)"
+	case BB_PHY_MCS_1:
+		return "BPSK CR=2/3 REP=1 single stream (MCS 1)"
+	case BB_PHY_MCS_2:
+		return "BPSK CR=3/4 REP=1 single stream (MCS 2)"
+	case BB_PHY_MCS_3:
+		return "QPSK CR=1/2 REP=1 single stream (MCS 3)"
+	case BB_PHY_MCS_4:
+		return "QPSK CR=2/3 REP=1 single stream (MCS 4)"
+	case BB_PHY_MCS_5:
+		return "QPSK CR=3/4 REP=1 single stream (MCS 5)"
+	case BB_PHY_MCS_6:
+		return "16QAM CR=1/2 REP=1 single stream (MCS 6)"
+	case BB_PHY_MCS_7:
+		return "16QAM CR=2/3 REP=1 single stream (MCS 7)"
+	case BB_PHY_MCS_8:
+		return "16QAM CR=3/4 REP=1 single stream (MCS 8)"
+	case BB_PHY_MCS_9:
+		return "64QAM CR=1/2 REP=1 single stream (MCS 9)"
+	case BB_PHY_MCS_10:
+		return "64QAM CR=2/3 REP=1 single stream (MCS 10)"
+	case BB_PHY_MCS_11:
+		return "64QAM CR=3/4 REP=1 single stream (MCS 11)"
+	case BB_PHY_MCS_12:
+		return "256QAM CR=1/2 REP=1 single stream (MCS 12)"
+	case BB_PHY_MCS_13:
+		return "256QAM CR=2/3 REP=1 single stream (MCS 13)"
+	case BB_PHY_MCS_14:
+		return "QPSK CR=1/2 REP=1 dual stream (MCS 14)"
+	case BB_PHY_MCS_15:
+		return "QPSK CR=2/3 REP=1 dual stream (MCS 15)"
+	case BB_PHY_MCS_16:
+		return "QPSK CR=3/4 REP=1 dual stream (MCS 16)"
+	case BB_PHY_MCS_17:
+		return "16QAM CR=1/2 REP=1 dual stream (MCS 17)"
+	case BB_PHY_MCS_18:
+		return "16QAM CR=2/3 REP=1 dual stream (MCS 18)"
+	case BB_PHY_MCS_19:
+		return "16QAM CR=3/4 REP=1 dual stream (MCS 19)"
+	case BB_PHY_MCS_20:
+		return "64QAM CR=1/2 REP=1 dual stream (MCS 20)"
+	case BB_PHY_MCS_21:
+		return "64QAM CR=2/3 REP=1 dual stream (MCS 21)"
+	case BB_PHY_MCS_22:
+		return "64QAM CR=3/4 REP=1 dual stream (MCS 22)"
+	default:
+		return fmt.Sprintf("Unknown MCS(%d)", m)
+	}
+}
 
 type User byte
 
@@ -180,6 +252,31 @@ const (
 	BB_SLOT_MAX             // Maximum logical position
 )
 
+func (s Slot) String() string {
+	switch s {
+	case BB_SLOT_0:
+		return "SLOT0"
+	case BB_SLOT_1:
+		return "SLOT1"
+	case BB_SLOT_2:
+		return "SLOT2"
+	case BB_SLOT_3:
+		return "SLOT3"
+	case BB_SLOT_4:
+		return "SLOT4"
+	case BB_SLOT_5:
+		return "SLOT5"
+	case BB_SLOT_6:
+		return "SLOT6"
+	case BB_SLOT_7:
+		return "SLOT7"
+	case BB_SLOT_MAX:
+		return "SLOT_MAX"
+	default:
+		return fmt.Sprintf("Unknown SLOT(%d)", int(s))
+	}
+}
+
 const BB_SLOT_AP Slot = BB_SLOT_0 // DEV侧用于标识AP的逻辑位置
 
 type SlotMode byte
@@ -188,6 +285,17 @@ const (
 	BB_SLOT_MODE_FIXED   SlotMode = iota // SLOT数量固定不变
 	BB_SLOT_MODE_DYNAMIC                 // 根据DEV的接入与退出，动态的调整帧结构
 )
+
+func (m SlotMode) String() string {
+	switch m {
+	case BB_SLOT_MODE_FIXED:
+		return "Fixed"
+	case BB_SLOT_MODE_DYNAMIC:
+		return "Dynamic"
+	default:
+		return fmt.Sprintf("Unknown SlotMode(%d)", m)
+	}
+}
 
 type LinkState byte
 
@@ -198,6 +306,19 @@ const (
 	BB_LINK_STATE_MAX
 )
 
+func (s LinkState) String() string {
+	switch s {
+	case BB_LINK_STATE_IDLE:
+		return "Idle"
+	case BB_LINK_STATE_LOCK:
+		return "Locked"
+	case BB_LINK_STATE_CONNECT:
+		return "Connected"
+	default:
+		return fmt.Sprintf("Unknown LinkState(%d)", s)
+	}
+}
+
 type Band byte
 
 const (
@@ -207,6 +328,19 @@ const (
 	BB_BAND_MAX
 )
 
+func (b Band) String() string {
+	switch b {
+	case BB_BAND_1G:
+		return "1G (150-1000MHz)"
+	case BB_BAND_2G:
+		return "2G (1000-4000MHz)"
+	case BB_BAND_5G:
+		return "5G (4000-7000MHz)"
+	default:
+		return fmt.Sprintf("Unknown Band(%d)", b)
+	}
+}
+
 type RFPath byte
 
 const (
@@ -214,6 +348,17 @@ const (
 	BB_RF_PATH_B               // 射频B路
 	BB_RF_PATH_MAX
 )
+
+func (r RFPath) String() string {
+	switch r {
+	case BB_RF_PATH_A:
+		return "RF Path A"
+	case BB_RF_PATH_B:
+		return "RF Path B"
+	default:
+		return fmt.Sprintf("Unknown RFPath(%d)", r)
+	}
+}
 
 type BandMode byte
 
@@ -224,6 +369,21 @@ const (
 	BB_BAND_MODE_1G_5G                  // 1G和5G组合
 	BB_BAND_MODE_MAX
 )
+
+func (m BandMode) String() string {
+	switch m {
+	case BB_BAND_MODE_SINGLE:
+		return "Single"
+	case BB_BAND_MODE_2G_5G:
+		return "2G+5G"
+	case BB_BAND_MODE_1G_2G:
+		return "1G+2G"
+	case BB_BAND_MODE_1G_5G:
+		return "1G+5G"
+	default:
+		return fmt.Sprintf("Unknown BandMode(%d)", m)
+	}
+}
 
 type Bandwidth byte
 
@@ -237,6 +397,25 @@ const (
 	BB_BW_MAX
 )
 
+func (b Bandwidth) String() string {
+	switch b {
+	case BB_BW_1_25M:
+		return "1.25MHz"
+	case BB_BW_2_5M:
+		return "2.5MHz"
+	case BB_BW_5M:
+		return "5MHz"
+	case BB_BW_10M:
+		return "10MHz"
+	case BB_BW_20M:
+		return "20MHz"
+	case BB_BW_40M:
+		return "40MHz"
+	default:
+		return fmt.Sprintf("Unknown Bandwidth(%d)", b)
+	}
+}
+
 type TimeIntlvLen byte
 
 const (
@@ -248,6 +427,23 @@ const (
 	BB_TIMEINTLV_LEN_MAX
 )
 
+func (l TimeIntlvLen) String() string {
+	switch l {
+	case BB_TIMEINTLV_LEN_3:
+		return "3 OFDM"
+	case BB_TIMEINTLV_LEN_6:
+		return "6 OFDM"
+	case BB_TIMEINTLV_LEN_12:
+		return "12 OFDM"
+	case BB_TIMEINTLV_LEN_24:
+		return "24 OFDM"
+	case BB_TIMEINTLV_LEN_48:
+		return "48 OFDM"
+	default:
+		return fmt.Sprintf("Unknown TimeIntlvLen(%d)", l)
+	}
+}
+
 type TimeIntlvEnable byte
 
 const (
@@ -256,6 +452,17 @@ const (
 	BB_TIMEINTLV_ENABLE_MAX
 )
 
+func (e TimeIntlvEnable) String() string {
+	switch e {
+	case BB_TIMEINTLV_OFF:
+		return "Off"
+	case BB_TIMEINTLV_ON:
+		return "On"
+	default:
+		return fmt.Sprintf("Unknown TimeIntlvEnable(%d)", e)
+	}
+}
+
 type TimeIntlvNum byte
 
 const (
@@ -263,6 +470,17 @@ const (
 	BB_TIMEINTLV_2_BLOCK                     // 两个交织块
 	BB_TIMEINTLV_NUM_MAX
 )
+
+func (n TimeIntlvNum) String() string {
+	switch n {
+	case BB_TIMEINTLV_1_BLOCK:
+		return "1 Block"
+	case BB_TIMEINTLV_2_BLOCK:
+		return "2 Block"
+	default:
+		return fmt.Sprintf("Unknown TimeIntlvNum(%d)", n)
+	}
+}
 
 // SoCmdOpt defines socket related command options
 type SoCmdOpt byte

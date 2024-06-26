@@ -4,11 +4,13 @@ import (
 	"ar8030/action"
 	"ar8030/bb"
 	"ar8030/log"
+	"bytes"
 	"context"
 	"fmt"
 	"github.com/joomcode/errorx"
 	"net"
 	"os"
+	"time"
 )
 
 const (
@@ -33,6 +35,84 @@ func printDeviceInfo(conn net.Conn, selId uint32) error {
 		return errorx.ExternalError.Wrap(err, "failed to get system info")
 	}
 	log.Sugar().Infow("system info", "id", selId, "info", sysInfo)
+	// port 0 & 1 can't open both (-259)
+	// port 2 can only be open at DEV role, AP can't read from it (-259)
+	// port 3 seems to work
+	var comPort byte = 3
+	go func() {
+		if st.Role == bb.BB_ROLE_DEV {
+			sktConn, err := bb.NewTCPFromConn(conn.(*net.TCPConn))
+			defer func() {
+				log.Sugar().Debugw("closing socket connection", "id", selId, "role", "DEV")
+				err = sktConn.Close()
+				if err != nil {
+					log.Sugar().Errorw("failed to close connection", "error", err.Error())
+				}
+			}()
+			if err != nil {
+				log.Sugar().Errorw("failed to create socket connection", "id", selId, "error", err.Error())
+				return
+			}
+			var slot = bb.BB_SLOT_AP
+			var port byte = comPort
+			err = action.OpenSocket(sktConn, selId, slot, port, bb.BB_SOCK_FLAG_TX|bb.BB_SOCK_FLAG_RX, nil)
+			if err != nil {
+				log.Sugar().Errorw("failed to open socket", "id", selId, "error", err.Error())
+				return
+			}
+			log.Sugar().Infow("socket opened", "id", selId, "slot", slot, "port", port, "role", "DEV")
+			for {
+				var m = []byte("hello")
+				err = action.WriteSocket(sktConn, selId, slot, port, m)
+				if err != nil {
+					log.Sugar().Errorw("failed to write to socket", "id", selId, "error", err.Error())
+				}
+				log.Sugar().Infow("socket tx", "id", selId, "message", string(m))
+				time.Sleep(1 * time.Second)
+			}
+		} else if st.Role == bb.BB_ROLE_AP {
+			sktConn, err := bb.NewTCPFromConn(conn.(*net.TCPConn))
+			defer func() {
+				log.Sugar().Debugw("closing socket connection", "id", selId, "role", "AP")
+				err = sktConn.Close()
+				if err != nil {
+					log.Sugar().Errorw("failed to close connection", "error", err.Error())
+				}
+			}()
+			if err != nil {
+				log.Sugar().Errorw("failed to create socket connection", "id", selId, "error", err.Error())
+				return
+			}
+			var slot = bb.BB_SLOT_0
+			var port byte = comPort
+			err = action.OpenSocket(sktConn, selId, slot, port, bb.BB_SOCK_FLAG_TX|bb.BB_SOCK_FLAG_RX, nil)
+			if err != nil {
+				log.Sugar().Errorw("failed to open socket", "id", selId, "error", err.Error())
+				return
+			}
+			log.Sugar().Infow("socket opened", "id", selId, "slot", slot, "port", port, "role", "AP")
+			for {
+				rBuf := make([]byte, 2048)
+				rbBuf := bytes.NewBuffer(rBuf)
+				_, err := sktConn.Read(rBuf)
+				if err != nil {
+					log.Sugar().Errorw("failed to read from socket", "id", selId, "error", err.Error())
+					return
+				}
+				pack := bb.UsbPack{}
+				err = pack.Read(rbBuf)
+				if err != nil {
+					log.Sugar().Errorw("failed to read pack", "id", selId, "error", err.Error())
+					return
+				}
+				msg, err := action.HandleSocketRx(&pack)
+				if err != nil {
+					log.Sugar().Errorw("failed to handle socket rx", "id", selId, "error", err.Error())
+				}
+				log.Sugar().Infow("socket rx", "id", selId, "message", msg)
+			}
+		}
+	}()
 	return nil
 }
 

@@ -1,9 +1,7 @@
 package bb
 
 type RequestId uint32 // RequestId has 24 bit req id, 8 bit domain id
-type DomainId uint8
-type SubCmd uint32 // SubCmd only use 24 bit actually
-type Event int
+type SubCmd uint32    // SubCmd only use 24 bit
 
 const (
 	BB_MAC_LEN         = 4    /*MAC地址字节长度*/
@@ -36,6 +34,8 @@ const (
 	BB_SOCK_FLAG_DATAGRAMSockFlag SockFlag = 1 << 3 /*@attention 指示socket传输为数据包模式，仅host driver侧支持*/
 )
 
+type DomainId byte
+
 const (
 	BB_REQ_CFG       DomainId = 0
 	BB_REQ_GET       DomainId = 1
@@ -47,6 +47,8 @@ const (
 	BB_REQ_RPC_IOCTL DomainId = 11
 	BB_REQ_PLAT_CTL  DomainId = 12
 )
+
+type Event byte
 
 // Note that daemon will subscribe 0...9 except 5
 const (
@@ -268,6 +270,64 @@ const (
 	SoUserBaseEnd   SoCmdOpt = 0xff
 )
 
+// SockCmd defines socket related command
+// see `bb_socket_com_opt` and `bb_sock_cmd_e`
+// only use in C to forward command
+/*
+type SockCmd byte
+
+const (
+	BB_SOCK_QUERY_TX_BUFF_LEN SockCmd = iota
+	BB_SOCK_QUERY_RX_BUFF_LEN
+	BB_SOCK_READ_INV_DATA
+	BB_SOCK_SET_TX_LIMIT
+	BB_SOCK_GET_TX_LIMIT
+)
+
+const SO_USER_BASE_START = 0xc0
+const (
+	BB_SOCK_IOCTL_ECHO   SockCmd = SO_USER_BASE_START + 0
+	BB_SOCK_TX_LEN_GET   SockCmd = SO_USER_BASE_START + 1
+	BB_SOCK_TX_LEN_RESET SockCmd = SO_USER_BASE_START + 2
+
+	BB_SOCK_IOCTL_MAX SockCmd = SO_USER_BASE_START + 3
+)
+*/
+
+const (
+	BB_CONFIG_PSRAM_ENABLE            = 1     // 使能基带PSRAM机制
+	BB_CONFIG_MRC_ENABLE              = 1     // 使能基带MRC机制
+	BB_CONFIG_MAX_TRANSPORT_PER_SLOT  = 4     // 每个SLOT上最大的transport数量
+	BB_CONFIG_MAX_INTERNAL_MSG_SIZE   = 128   // SDK内部消息通道最大消息长度，不含消息头
+	BB_CONFIG_MAX_TX_NODE_NUM         = 10    // MAC层最大发送节点数量
+	BB_CONFIG_MAC_RX_BUF_SIZE         = 60000 // 默认socket的接收buffer大小
+	BB_CONFIG_MAC_TX_BUF_SIZE         = 40000 // 默认socket的发送buffer大小
+	BB_CONFIG_MAX_USER_MCS_NUM        = 16    // 最大用户可设置的MCS等级数量
+	BB_CONFIG_MAX_CHAN_NUM            = 32    // 最大用户可设置的信道数量
+	BB_CONFIG_MAX_CHAN_HOP_ITEM_NUM   = 5     // 最大跳频触发项条目数量
+	BB_CONFIG_MAX_SLOT_CANDIDATE      = 5     // 每个SLOT可设置的最大候选人数量
+	BB_CONFIG_BR_FREQ_OFFSET          = 0     // BR与信道的频偏值 单位：KHz
+	BB_CONFIG_LINK_UNLOCK_TIMEOUT     = 1000  // Link通道超时门限 单位：毫秒
+	BB_CONFIG_SLOT_UNLOCK_TIMEOUT     = 1000  // FCH超时门限 单位：毫秒
+	BB_CONFIG_IDLE_SLOT_THRED         = 10    // SLOT空闲门限，用于动态slot模式，单位：秒
+	BB_CONFIG_EOP_SAMPLE_NUM          = 8     // EOP处理最近样本大小
+	BB_CONFIG_ENABLE_BR_MCS           = 1     // 使能BR的MCS控制，仅对1V1模式有效
+	BB_CONFIG_ENABLE_BLOCK_SWITCH     = 1     // 使用阻塞式模式切换机制（实验室阶段）
+	BB_CONFIG_1V1_DEV_CTRL_BR_CHAN    = 1     // 1V1模式下，使能DEV控制BR的TX信道
+	BB_CONFIG_1V1_COMPT_BR            = 1     // 1V1模式下，BR压缩模式（实验室阶段）
+	BB_CONFIG_ENABLE_LTP              = 1     // 使能网络隔离机制
+	BB_CONFIG_ENABLE_TIME_DISPATCH    = 1     // 使能链路授时机制
+	BB_CONFIG_ENABLE_FRAME_CHANGE     = 1     // 使能1V1模式下，改变帧结构的功能
+	BB_CONFIG_ENABLE_RC_HOP_POLICY    = 1     // 使能选择性跳频策略
+	BB_CONFIG_ENABLE_AUTO_BAND_POLICY = 0     // 使能频段自适应功能
+	BB_CONFIG_ENABLE_1V1_POWER_SAVE   = 1     // 使能1V1模式的节能机制
+	BB_CONFIG_DEMO_STREAM             = 0     // TBD
+	BB_CONFIG_OLD_PLOT_MODE           = 0     // TBD
+	BB_CONFIG_FRAME_CROPPING          = 1     // 1VN模式下，动态删除或增加csma帧结构
+	BB_CONFIG_LINK_BY_GROUPID         = 0     // 分组配对开关(for hyy)
+	BB_CONFIG_ENABLE_RF_FILTER_PATCH  = 0     // 使能RF滤波patch
+)
+
 type Payload byte
 
 const (
@@ -348,59 +408,4 @@ const (
 	BB_DFS_CONF_GET DFSSubCmd = iota
 	BB_DFS_CONF_SET
 	BB_DFS_EVENT
-)
-
-// SockCmd defines socket related command
-// see `bb_socket_com_opt`
-type SockCmd byte
-
-const (
-	BB_SOCK_QUERY_TX_BUFF_LEN SockCmd = iota
-	BB_SOCK_QUERY_RX_BUFF_LEN
-	BB_SOCK_READ_INV_DATA
-	BB_SOCK_SET_TX_LIMIT
-	BB_SOCK_GET_TX_LIMIT
-)
-
-const SO_USER_BASE_START = 0xc0
-const (
-	BB_SOCK_IOCTL_ECHO   SockCmd = SO_USER_BASE_START + 0
-	BB_SOCK_TX_LEN_GET   SockCmd = SO_USER_BASE_START + 1
-	BB_SOCK_TX_LEN_RESET SockCmd = SO_USER_BASE_START + 2
-
-	BB_SOCK_IOCTL_MAX SockCmd = SO_USER_BASE_START + 3
-)
-
-const (
-	BB_CONFIG_PSRAM_ENABLE            = 1     // 使能基带PSRAM机制
-	BB_CONFIG_MRC_ENABLE              = 1     // 使能基带MRC机制
-	BB_CONFIG_MAX_TRANSPORT_PER_SLOT  = 4     // 每个SLOT上最大的transport数量
-	BB_CONFIG_MAX_INTERNAL_MSG_SIZE   = 128   // SDK内部消息通道最大消息长度，不含消息头
-	BB_CONFIG_MAX_TX_NODE_NUM         = 10    // MAC层最大发送节点数量
-	BB_CONFIG_MAC_RX_BUF_SIZE         = 60000 // 默认socket的接收buffer大小
-	BB_CONFIG_MAC_TX_BUF_SIZE         = 40000 // 默认socket的发送buffer大小
-	BB_CONFIG_MAX_USER_MCS_NUM        = 16    // 最大用户可设置的MCS等级数量
-	BB_CONFIG_MAX_CHAN_NUM            = 32    // 最大用户可设置的信道数量
-	BB_CONFIG_MAX_CHAN_HOP_ITEM_NUM   = 5     // 最大跳频触发项条目数量
-	BB_CONFIG_MAX_SLOT_CANDIDATE      = 5     // 每个SLOT可设置的最大候选人数量
-	BB_CONFIG_BR_FREQ_OFFSET          = 0     // BR与信道的频偏值 单位：KHz
-	BB_CONFIG_LINK_UNLOCK_TIMEOUT     = 1000  // Link通道超时门限 单位：毫秒
-	BB_CONFIG_SLOT_UNLOCK_TIMEOUT     = 1000  // FCH超时门限 单位：毫秒
-	BB_CONFIG_IDLE_SLOT_THRED         = 10    // SLOT空闲门限，用于动态slot模式，单位：秒
-	BB_CONFIG_EOP_SAMPLE_NUM          = 8     // EOP处理最近样本大小
-	BB_CONFIG_ENABLE_BR_MCS           = 1     // 使能BR的MCS控制，仅对1V1模式有效
-	BB_CONFIG_ENABLE_BLOCK_SWITCH     = 1     // 使用阻塞式模式切换机制（实验室阶段）
-	BB_CONFIG_1V1_DEV_CTRL_BR_CHAN    = 1     // 1V1模式下，使能DEV控制BR的TX信道
-	BB_CONFIG_1V1_COMPT_BR            = 1     // 1V1模式下，BR压缩模式（实验室阶段）
-	BB_CONFIG_ENABLE_LTP              = 1     // 使能网络隔离机制
-	BB_CONFIG_ENABLE_TIME_DISPATCH    = 1     // 使能链路授时机制
-	BB_CONFIG_ENABLE_FRAME_CHANGE     = 1     // 使能1V1模式下，改变帧结构的功能
-	BB_CONFIG_ENABLE_RC_HOP_POLICY    = 1     // 使能选择性跳频策略
-	BB_CONFIG_ENABLE_AUTO_BAND_POLICY = 0     // 使能频段自适应功能
-	BB_CONFIG_ENABLE_1V1_POWER_SAVE   = 1     // 使能1V1模式的节能机制
-	BB_CONFIG_DEMO_STREAM             = 0     // TBD
-	BB_CONFIG_OLD_PLOT_MODE           = 0     // TBD
-	BB_CONFIG_FRAME_CROPPING          = 1     // 1VN模式下，动态删除或增加csma帧结构
-	BB_CONFIG_LINK_BY_GROUPID         = 0     // 分组配对开关(for hyy)
-	BB_CONFIG_ENABLE_RF_FILTER_PATCH  = 0     // 使能RF滤波patch
 )

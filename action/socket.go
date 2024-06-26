@@ -9,7 +9,10 @@ import (
 )
 
 // OpenSocket implements `bb_socket_open`
-// note that flags are bb.BB_SOCK_FLAG_TX, bb.BB_SOCK_FLAG_RX and bb.BB_SOCK_FLAG_DATAGRAM (not sure about DATAGRAM)
+//
+//   - slot 目标SLOT, 如果为DEV，目标SLOT均为BB_SLOT_AP, See bb.Slot
+//   - port 逻辑端口，不同端口的数据互相独立，port 的数量受 bb.BB_CONFIG_MAX_TRANSPORT_PER_SLOT 控制
+//   - flags 传输标志，可以是 bb.BB_SOCK_FLAG_TX, bb.BB_SOCK_FLAG_RX, bb.BB_SOCK_FLAG_DATAGRAMSockFlag
 func OpenSocket(conn net.Conn, workId uint32, slot bb.Slot, port byte, flags bb.SockFlag, opt *bb.SockOpt) error {
 	defaultOpt := bb.SockOpt{
 		TxBufSize: bb.BB_CONFIG_MAC_TX_BUF_SIZE,
@@ -57,8 +60,8 @@ func OpenSocket(conn net.Conn, workId uint32, slot bb.Slot, port byte, flags bb.
 
 // WriteSocket implements `bb_socket_write`
 //
-// slot 目标SLOT, 如果为DEV，目标SLOT均为BB_SLOT_AP, See also bb.Slot
-// port 逻辑端口，不同端口的数据互相独立，port 的数量受配置宏 bb.BB_CONFIG_MAX_TRANSPORT_PER_SLOT 控制
+//   - slot 目标SLOT, 如果为DEV，目标SLOT均为BB_SLOT_AP, See bb.Slot
+//   - port 逻辑端口，不同端口的数据互相独立，port 的数量受配置宏 bb.BB_CONFIG_MAX_TRANSPORT_PER_SLOT 控制
 //
 // TODO: find out what `datagram` means
 func WriteSocket(conn net.Conn, workId uint32, slot bb.Slot, port byte, payload []byte) error {
@@ -81,12 +84,33 @@ func WriteSocket(conn net.Conn, workId uint32, slot bb.Slot, port byte, payload 
 	return nil
 }
 
+type RxMessage struct {
+	Slot    bb.Slot
+	Port    byte
+	Payload []byte
+}
+
+// HandleSocketRx implements `so_rpc_cb`
+func HandleSocketRx(pack *bb.UsbPack) (*RxMessage, error) {
+	opt := bb.SoCmdOpt(pack.ReqId >> 16 & 0xff)
+	slot := bb.Slot(pack.ReqId >> 8 & 0xff)
+	port := byte(pack.ReqId & 0xff)
+	if opt != bb.SoRead {
+		return nil, errorx.IllegalState.New("not a read command")
+	}
+	return &RxMessage{
+		Slot:    slot,
+		Port:    port,
+		Payload: pack.Buf,
+	}, nil
+}
+
 func CloseSocket(conn net.Conn, workId uint32, slot bb.Slot, port byte) error {
-	// dummy implementation
 	return nil
 }
 
 // SocketComOpt implements `bb_socket_com_opt`
+// TODO: implement this
 // see also
 //   - `bb_socket_ioctl`
 //   - `bb_socket_com_opt`
@@ -94,7 +118,7 @@ func CloseSocket(conn net.Conn, workId uint32, slot bb.Slot, port byte) error {
 //   - `BASE_FUN` (`sofun`) .rdcb
 //   - `BASE_SESSION` (what kind of session we're talking about?)
 //   - bb_read_thread (interesting)
-func SocketComOpt(conn net.Conn, workId uint32, slot bb.Slot, port byte, opt *bb.SockOpt) error {
-	// dummy implementation
-	return nil
+func SocketComOpt(conn net.Conn, workId uint32, slot bb.Slot, port byte, opt bb.SoCmdOpt) error {
+	// var reqId = bb.SocketRequestId(opt, slot, port)
+	return errorx.NotImplemented.New("SocketComOpt")
 }

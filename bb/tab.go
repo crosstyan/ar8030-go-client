@@ -46,7 +46,7 @@ type LinkStatus struct {
 // GetStatusOut implements the output parameter of BB_GET_STATUS
 type GetStatusOut struct {
 	Role       Role                         // Device role. Type: bb_role_e
-	Mode       Mode                         // Baseband mode. Type: bb_mode_e
+	Mode       Mode                         // Base band mode. Type: bb_mode_e
 	SyncMode   uint8                        // Chip sync mode. 1: enable, 0: disable
 	SyncMaster uint8                        // Identity in sync mode. 1: master, 0: slave
 	CfgSbmp    uint8                        // Configured SLOT bitmap

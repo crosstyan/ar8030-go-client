@@ -5,7 +5,6 @@ import (
 	"ar8030/log"
 	"bytes"
 	"encoding/binary"
-	"encoding/hex"
 	"github.com/joomcode/errorx"
 	"net"
 	"unsafe"
@@ -39,8 +38,8 @@ func GetStatus(conn net.Conn, workId uint32, userBmp uint16) (*bb.GetStatusOut, 
 	if resp.Sta < 0 {
 		return nil, errorx.ExternalError.New("bad status %d", resp.Sta)
 	}
-	oStaus := bb.UnsafeFromByteSlice[bb.GetStatusOut](resp.Buf)
-	return &oStaus, nil
+	oSta := bb.UnsafeFromByteSlice[bb.GetStatusOut](resp.Buf)
+	return &oSta, nil
 }
 
 // GetSysInfo implements bb.BB_GET_SYS_INFO, fetching the system information
@@ -212,10 +211,13 @@ func GetMac(conn net.Conn, workId uint32) ([]byte, error) {
 	return resp.Buf, nil
 }
 
-func QuerySockBufSta(conn net.Conn, workId uint32, slot int32, port int32) (*bb.QueryTxOut, error) {
+// QuerySockBufSta implements the bb.BB_RPC_SOCK_BUF_STA to query the status of the socket buffer
+//
+// See also `test_io_bb_query`
+func QuerySockBufSta(conn net.Conn, workId uint32, slot bb.Slot, port byte) (*bb.QueryTxOut, error) {
 	ip := &bb.QueryTxIn{
-		Slot: slot,
-		Port: port,
+		Slot: int32(slot),
+		Port: int32(port),
 	}
 	// you can't use `int` directly for `binary.Write`, that's weird
 	buf := bb.NewBuffer(32)
@@ -227,7 +229,6 @@ func QuerySockBufSta(conn net.Conn, workId uint32, slot int32, port int32) (*bb.
 	if err != nil {
 		return nil, err
 	}
-	log.Sugar().Debugw("query sock buf sta", "ip", ip, "buf", hex.EncodeToString(buf.Bytes()))
 	pack := &bb.UsbPack{
 		Buf:   buf.Bytes(),
 		MsgId: workId,

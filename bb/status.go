@@ -2,6 +2,7 @@ package bb
 
 import (
 	"fmt"
+	"github.com/barweiss/go-tuple"
 	"strings"
 	"time"
 	"unsafe"
@@ -14,21 +15,34 @@ func UnsafeFromByteSlice[T any](data []byte) T {
 	return *(*T)(unsafe.Pointer(&data[0]))
 }
 
-func (s *GetStatusOut) GetMaskedStatus() ([]UserStatus, []LinkStatus) {
+type UserStatusPair = tuple.T2[int, UserStatus]
+type LinkStatusPair = tuple.T2[int, LinkStatus]
+
+func (s *GetStatusOut) getMaskedStatus(bitMap byte) ([]UserStatusPair, []LinkStatusPair) {
 	// can also use CfgBmp
-	bitMap := s.RtSbmp
+	// bitMap := s.RtSbmp
 	var it uint32 = 0
-	sts := make([]UserStatus, 0, BB_DATA_USER_MAX)
-	lSts := make([]LinkStatus, 0, BB_SLOT_MAX)
+	sts := make([]UserStatusPair, 0, BB_DATA_USER_MAX)
+	lSts := make([]LinkStatusPair, 0, BB_SLOT_MAX)
 	for it < 8 {
 		if bitMap&0x1 == 1 {
-			sts = append(sts, s.UserStatus[it])
-			lSts = append(lSts, s.LinkStatus[it])
+			sts = append(sts, tuple.New2(int(it), s.UserStatus[it]))
+			lSts = append(lSts, tuple.New2(int(it), s.LinkStatus[it]))
 		}
 		bitMap >>= 1
 		it++
 	}
 	return sts, lSts
+}
+
+// GetCfgMaskedStatus returns the masked status of the configured slots
+func (s *GetStatusOut) GetCfgMaskedStatus() ([]UserStatusPair, []LinkStatusPair) {
+	return s.getMaskedStatus(s.CfgSbmp)
+}
+
+// GetRuntimeMaskedStatus returns the masked status of the runtime slots
+func (s *GetStatusOut) GetRuntimeMaskedStatus() ([]UserStatusPair, []LinkStatusPair) {
+	return s.getMaskedStatus(s.RtSbmp)
 }
 
 func MacToString(mac *MacAddr) string {
@@ -72,16 +86,18 @@ func (s *GetStatusOut) String() string {
 	_, _ = fmt.Fprintf(ss, "RtSbmp:%d, ", s.RtSbmp)
 	_, _ = fmt.Fprintf(ss, "Mac:'%s'", MacToString(&s.Mac))
 	_, _ = fmt.Fprintf(ss, ", ")
-	uSts, lSts := s.GetMaskedStatus()
+	uSts, lSts := s.GetRuntimeMaskedStatus()
 	for i, sts := range uSts {
-		_, _ = fmt.Fprintf(ss, "UserStatus[%d]:%s", i, sts.String())
+		idx, uSt := sts.Values()
+		_, _ = fmt.Fprintf(ss, "UserStatus[%d]:%s", idx, uSt.String())
 		if i < len(uSts)-1 {
 			_, _ = fmt.Fprintf(ss, ", ")
 		}
 	}
 	_, _ = fmt.Fprintf(ss, ", ")
 	for i, sts := range lSts {
-		_, _ = fmt.Fprintf(ss, "LinkStatus[%d]:%s", i, sts.String())
+		idx, lSt := sts.Values()
+		_, _ = fmt.Fprintf(ss, "LinkStatus[%d]:%s", idx, lSt.String())
 		if i < len(lSts)-1 {
 			_, _ = fmt.Fprintf(ss, ", ")
 		}

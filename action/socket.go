@@ -6,7 +6,58 @@ import (
 	"encoding/binary"
 	"github.com/joomcode/errorx"
 	"net"
+	"unsafe"
 )
+
+// QuerySockBufSta implements the bb.BB_RPC_SOCK_BUF_STA to query the status of the socket buffer
+//
+// See also `test_io_bb_query`
+func QuerySockBufSta(conn net.Conn, workId uint32, slot bb.Slot, port byte) (*bb.QueryTxOut, error) {
+	ip := &bb.QueryTxIn{
+		Slot: int32(slot),
+		Port: int32(port),
+	}
+	// you can't use `int` directly for `binary.Write`, that's weird
+	buf := bb.NewBuffer(32)
+	err := binary.Write(buf, binary.NativeEndian, ip.Slot)
+	if err != nil {
+		return nil, err
+	}
+	err = binary.Write(buf, binary.NativeEndian, ip.Port)
+	if err != nil {
+		return nil, err
+	}
+	pack := &bb.UsbPack{
+		Buf:   buf.Bytes(),
+		MsgId: workId,
+		Sta:   0,
+		ReqId: bb.BB_RPC_SOCK_BUF_STA,
+	}
+	opt := RequestOption{
+		RequestBufferSize:  64,
+		ResponseBufferSize: 64,
+	}
+	resp, err := RequestWithPack(conn, pack, &opt)
+	if err != nil {
+		return nil, err
+	}
+	if resp.ReqId != bb.BB_RPC_SOCK_BUF_STA {
+		return nil, errorx.ExternalError.New("unexpected request id %d", resp.ReqId)
+	}
+	if resp.Sta < 0 {
+		if resp.Sta == -1 {
+			// no idea how this work
+			return nil, errorx.ExternalError.New("no such work node. see `buf_query` in `rpc_debug.c` for more information.")
+		}
+		return nil, errorx.ExternalError.New("bad status %d", resp.Sta)
+	}
+	expected := int(unsafe.Sizeof(bb.QueryTxOut{}))
+	if len(resp.Buf) < expected {
+		return nil, errorx.ExternalError.New("unexpected response length %d, expected %d", len(resp.Buf), expected)
+	}
+	o := bb.UnsafeFromByteSlice[bb.QueryTxOut](resp.Buf)
+	return &o, nil
+}
 
 // OpenSocket implements `bb_socket_open`
 //

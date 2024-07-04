@@ -12,6 +12,7 @@ def main(port: int):
 
     async def _main():
         async with await create_udp_socket(family=socket.AF_INET,
+                                           local_host="localhost",
                                            local_port=port) as udp:
             async for packet, (host, remote_port) in udp:
                 logger.info("len={}, host={}, port={}, pkt={}", len(packet),

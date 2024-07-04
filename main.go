@@ -10,13 +10,19 @@ import (
 	"github.com/joomcode/errorx"
 	"net"
 	"os"
-	"time"
 )
 
 const (
 	HOST = "127.0.0.1"
 	PORT = 50000
 )
+
+type SocketAdapter struct {
+	// client
+	TxConn *net.UDPConn
+	// server
+	RxConn *net.UDPConn
+}
 
 func printDeviceInfo(conn net.Conn, selId uint32) error {
 	mac, err := action.GetMac(conn, selId)
@@ -39,7 +45,7 @@ func printDeviceInfo(conn net.Conn, selId uint32) error {
 	// port 2 can only be open at DEV role, AP can't read from it (-259)
 	// port 3 seems to work
 	var comPort byte = 3
-	recvLoop := func(sktConn net.Conn, selId uint32, role bb.Role) {
+	recvLoop := func(sktConn net.Conn, selId uint32, role bb.Role, downStream net.Conn) {
 		for {
 			rBuf := make([]byte, 2048)
 			rbBuf := bytes.NewBuffer(rBuf)
@@ -58,7 +64,11 @@ func printDeviceInfo(conn net.Conn, selId uint32) error {
 			if hdr.Opt == bb.SoRead {
 				msg, _ := action.UnwrapSocketRx(&pack)
 				if msg != nil {
-					log.Sugar().Infow("socket rx", "id", selId, "message", string(msg.Payload))
+					log.Sugar().Infow("socket rx", "id", selId, "len", len(msg.Payload))
+				}
+				_, err := downStream.Write(msg.Payload)
+				if err != nil {
+					log.Sugar().Errorw("failed to write to downstream", "id", selId, "error", err.Error())
 				}
 			}
 		}
@@ -77,6 +87,7 @@ func printDeviceInfo(conn net.Conn, selId uint32) error {
 				log.Sugar().Errorw("failed to create socket connection", "id", selId, "error", err.Error())
 				return
 			}
+
 			var slot = bb.BB_SLOT_AP
 			var port byte = comPort
 			err = action.OpenSocket(sktConn, selId, slot, port, bb.BB_SOCK_FLAG_TX|bb.BB_SOCK_FLAG_RX, nil)
@@ -85,15 +96,47 @@ func printDeviceInfo(conn net.Conn, selId uint32) error {
 				return
 			}
 			log.Sugar().Infow("socket opened", "id", selId, "slot", slot, "port", port, "role", st.Role)
-			go recvLoop(sktConn, selId, st.Role)
+
+			var downAddrDev = "127.0.0.1:8000"
+			udpAddr, err := net.ResolveUDPAddr("udp", downAddrDev)
+			downStream, err := net.DialUDP("udp", nil, udpAddr)
+			defer func() {
+				log.Sugar().Debugw("closing downstream connection", "id", selId, "role", st.Role)
+				err = downStream.Close()
+				if err != nil {
+					log.Sugar().Errorw("failed to close connection", "error", err.Error())
+				}
+			}()
+			if err != nil {
+				log.Sugar().Errorw("failed to dial UDP", "id", selId, "error", err.Error())
+			}
+			log.Sugar().Infow("downstream connection established", "id", selId, "role", st.Role, "address", downAddrDev, "type", "forward")
+
+			var upAddrDev = "127.0.0.1:8001"
+			udpAddr, err = net.ResolveUDPAddr("udp", upAddrDev)
+			upStream, err := net.ListenUDP("udp", udpAddr)
+			defer func() {
+				log.Sugar().Debugw("closing upstream connection", "id", selId, "role", st.Role)
+				err = upStream.Close()
+				if err != nil {
+					log.Sugar().Errorw("failed to close connection", "error", err.Error())
+				}
+			}()
+			log.Sugar().Infow("upstream connection established", "id", selId, "role", st.Role, "address", upAddrDev, "type", "listen")
+
+			go recvLoop(sktConn, selId, st.Role, downStream)
 			for {
-				var m = []byte("hello from dev")
+				r := make([]byte, 10240)
+				n, _, err := upStream.ReadFromUDP(r)
+				if err != nil {
+					log.Sugar().Errorw("failed to read from upstream", "id", selId, "role", st.Role, "error", err.Error())
+				}
+				m := r[:n]
 				err = action.WriteSocket(sktConn, selId, slot, port, m)
 				if err != nil {
 					log.Sugar().Errorw("failed to write to socket", "id", selId, "role", st.Role, "error", err.Error())
 				}
-				log.Sugar().Infow("socket tx", "id", selId, "role", st.Role, "message", string(m))
-				time.Sleep(1 * time.Second)
+				log.Sugar().Infow("socket tx", "id", selId, "role", st.Role, "len", n)
 			}
 		} else if st.Role == bb.BB_ROLE_AP {
 			sktConn, err := bb.NewTCPFromConn(conn.(*net.TCPConn))
@@ -116,15 +159,47 @@ func printDeviceInfo(conn net.Conn, selId uint32) error {
 				return
 			}
 			log.Sugar().Infow("socket opened", "id", selId, "slot", slot, "port", port, "role", st.Role)
-			go recvLoop(sktConn, selId, st.Role)
+
+			var downAddrAP = "127.0.0.1:9000"
+			udpAddr, err := net.ResolveUDPAddr("udp", downAddrAP)
+			downStream, err := net.DialUDP("udp", nil, udpAddr)
+			defer func() {
+				log.Sugar().Debugw("closing downstream connection", "id", selId, "role", st.Role)
+				err = downStream.Close()
+				if err != nil {
+					log.Sugar().Errorw("failed to close connection", "error", err.Error())
+				}
+			}()
+			if err != nil {
+				log.Sugar().Errorw("failed to dial UDP", "id", selId, "error", err.Error())
+			}
+			log.Sugar().Infow("downstream connection established", "id", selId, "role", st.Role, "address", downAddrAP, "type", "forward")
+
+			var upAddrAP = "127.0.0.1:9001"
+			udpAddr, err = net.ResolveUDPAddr("udp", upAddrAP)
+			upStream, err := net.ListenUDP("udp", udpAddr)
+			defer func() {
+				log.Sugar().Debugw("closing upstream connection", "id", selId, "role", st.Role)
+				err = upStream.Close()
+				if err != nil {
+					log.Sugar().Errorw("failed to close connection", "error", err.Error())
+				}
+			}()
+			log.Sugar().Infow("upstream connection established", "id", selId, "role", st.Role, "address", upAddrAP, "type", "listen")
+
+			go recvLoop(sktConn, selId, st.Role, downStream)
 			for {
-				var m = []byte("hello from ap")
+				r := make([]byte, 10240)
+				n, _, err := upStream.ReadFromUDP(r)
+				if err != nil {
+					log.Sugar().Errorw("failed to read from upstream", "id", selId, "role", st.Role, "error", err.Error())
+				}
+				m := r[:n]
 				err = action.WriteSocket(sktConn, selId, slot, port, m)
 				if err != nil {
 					log.Sugar().Errorw("failed to write to socket", "id", selId, "role", st.Role, "error", err.Error())
 				}
-				log.Sugar().Infow("socket tx", "id", selId, "role", st.Role, "message", string(m))
-				time.Sleep(2*time.Second + 500*time.Millisecond)
+				log.Sugar().Infow("socket tx", "id", selId, "role", st.Role, "len", n)
 			}
 		}
 	}()
@@ -158,6 +233,7 @@ func main() {
 	log.Sugar().Infow("work id list", "list", wrkList)
 	ctx := context.Background()
 	subChs := make([]<-chan action.SubscribedMessage, 0)
+
 	// handleDevice prints device info and subscribes to events
 	handleDevice := func(selId uint32) {
 		conn, err := bb.NewTCPFromConn(conn)

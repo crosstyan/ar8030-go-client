@@ -11,6 +11,7 @@ from enum import Enum
 def main(port: int):
 
     async def _main():
+        logger.info("Listening on port={}", port)
         async with await create_udp_socket(family=socket.AF_INET,
                                            local_host="localhost",
                                            local_port=port) as udp:
